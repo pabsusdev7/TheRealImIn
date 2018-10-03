@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+         - This Guideline divides the screen into a left half and a right half and is used to    -
+         - anchor the views to the middle of the screen.                                         -
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+        <android.support.constraint.Guideline
+            android:id="@+id/horizontal_middle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5"
+            tools:layout_editor_absoluteX="192dp"
+            tools:layout_editor_absoluteY="0dp"/>
+
+        <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+         - Selected day's date                                                                   -
+         -                                                                                       -
+         - You may notice that the line android:fontFamily="sans-serif" is highlighted in        -
+         - yellow. The reason for the highlighted line is that the fontFamily attribute is not   -
+         - available on versions of Android before 16, and our minimum supported version of      -
+         - Android is 10. This - particular issue won't break the app, but you should note that  -
+         - this attribute will be - ignored on devices that run an Android version less than 16. -
+         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+        <TextView
+            android:id="@+id/event"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@+id/date"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            tools:text="Event's Title" />
+
+        <TextView
+            android:id="@+id/date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:textSize="20sp"
+            app:layout_constraintBottom_toTopOf="@+id/location_map"
+            app:layout_constraintLeft_toLeftOf="@id/event"
+            app:layout_constraintRight_toRightOf="@id/event"
+            tools:text="Saturday, September 24" />
+
+        <!-- Icon indicating weather condition -->
+        <TextView
+            android:id="@+id/location_map"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:text="AFSC - Great Room"
+            android:textAlignment="center"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/horizontal_middle"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Text that describes weather condition -->
+        <TextView
+            android:id="@+id/location_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textColor="@color/linkable_text"
+            android:textSize="14sp"
+            app:layout_constraintHorizontal_bias="0.441"
+            app:layout_constraintLeft_toLeftOf="@+id/location_map"
+            app:layout_constraintRight_toRightOf="@+id/location_map"
+            app:layout_constraintTop_toBottomOf="@+id/location_map"
+            tools:text="@string/show_directions" />
+
+        <TextView
+            android:id="@+id/start_time"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@color/primary_text"
+            android:textSize="64sp"
+            app:layout_constraintBottom_toBottomOf="@+id/location_map"
+            app:layout_constraintHorizontal_bias="0.45"
+            app:layout_constraintLeft_toLeftOf="@+id/horizontal_middle"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/location_map"
+            tools:text="09:30" />
+
+        <TextView
+            android:id="@+id/end_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="76dp"
+            android:fontFamily="sans-serif-light"
+            android:textColor="@color/secondary_text"
+            android:textSize="36sp"
+            app:layout_constraintLeft_toLeftOf="@+id/start_time"
+            app:layout_constraintRight_toRightOf="@+id/start_time"
+            app:layout_constraintTop_toTopOf="@+id/start_time"
+            tools:text="10:30" />
+
+        <TextView
+            android:id="@+id/tv_from_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="From"
+            app:layout_constraintEnd_toStartOf="@+id/start_time"
+            app:layout_constraintTop_toBottomOf="@+id/date" />
+
+        <TextView
+            android:id="@+id/tv_to_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:text="To"
+            app:layout_constraintEnd_toEndOf="@+id/tv_from_time"
+            app:layout_constraintStart_toStartOf="@+id/tv_from_time"
+            app:layout_constraintTop_toTopOf="@+id/end_time"
+            android:layout_marginLeft="16dp" />
+
+    </android.support.constraint.ConstraintLayout>
+</layout>

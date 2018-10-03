@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name"> ImIn</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_checkin">Check In</string>
+    <string name="event_label">Select an Event:</string>
+    <string name="error_message">There was an error while loading the upcoming events. Please, try again later.</string>
+    <string name="label_location">Location:</string>
+    <string name="label_starttime">Start Time:</string>
+    <string name="label_endtime">End Time:</string>
+    <string name="title_location_permission">Location Permission</string>
+    <string name="text_location_permission">Location is required to use this application.</string>
+    <string name="ok">Ok</string>
+    <string name="label_event">Which event are you planning to attend?</string>
+    <string name="toast_checkin">Checked in!</string>
+    <string name="title_attendance">Attendance</string>
+    <string name="attendance_error_message">There was an error while loading attendance information. Please, try again.</string>
+    <string name="show_directions">Show In Map</string>
+    <string name="checkin_label">Check In:</string>
+    <string name="checkout_label">Check Out:</string>
+    <string name="no_data">No Data</string>
+</resources>
