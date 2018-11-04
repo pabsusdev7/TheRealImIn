@@ -7,6 +7,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -32,6 +33,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
     private static final String TAG = AttendanceActivity.class.getSimpleName();
 
     private RecyclerView mRecyclerView;
+    private DividerItemDecoration mDividerItemDecoration;
     private AttendanceAdapter mAttendanceAdapter;
     private TextView mErrorMessageDisplay;
     private ProgressBar mLoadingIndicator;
@@ -54,6 +56,11 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         mRecyclerView.setLayoutManager(layoutManager);
 
         mRecyclerView.setHasFixedSize(true);
+
+        mDividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(),
+                layoutManager.getOrientation());
+
+        mRecyclerView.addItemDecoration(mDividerItemDecoration);
 
         mAttendanceAdapter = new AttendanceAdapter(this);
 

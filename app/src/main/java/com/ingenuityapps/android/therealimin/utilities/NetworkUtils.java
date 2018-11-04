@@ -34,7 +34,7 @@ public final class NetworkUtils {
 
     private static final String TAG = NetworkUtils.class.getSimpleName();
 
-    private static final String IP_ADDRESS = "10.59.25.76";//10.59.25.36
+    private static final String IP_ADDRESS = "192.168.1.30";//10.59.25.36
 
     private static final String STATIC_REST_URL =
             "http://" + IP_ADDRESS + ":8080/imin-web/webresources/";
