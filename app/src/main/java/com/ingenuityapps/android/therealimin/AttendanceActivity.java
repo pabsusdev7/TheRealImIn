@@ -2,8 +2,11 @@ package com.ingenuityapps.android.therealimin;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.support.v4.view.GravityCompat;
+import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,19 +21,37 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.SuccessContinuation;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.ingenuityapps.android.therealimin.data.AttendanceAdapter;
+import com.ingenuityapps.android.therealimin.data.CheckIn;
 import com.ingenuityapps.android.therealimin.data.Event;
+import com.ingenuityapps.android.therealimin.data.Location;
+import com.ingenuityapps.android.therealimin.utilities.Constants;
 import com.ingenuityapps.android.therealimin.utilities.NetworkUtils;
 
-import java.math.BigDecimal;
 import java.net.URL;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 public class AttendanceActivity extends AppCompatActivity implements AttendanceAdapter.AttendanceAdapterOnClickHandler {
 
     private static final String TAG = AttendanceActivity.class.getSimpleName();
+
+    private FirebaseFirestore db;
 
     private RecyclerView mRecyclerView;
     private DividerItemDecoration mDividerItemDecoration;
@@ -38,10 +59,18 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
     private TextView mErrorMessageDisplay;
     private ProgressBar mLoadingIndicator;
 
+    private String mDeviceID;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance);
+
+        db = FirebaseFirestore.getInstance();
+
+        SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
+
+        mDeviceID = prefs.getString("deviceid",null);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(true);
@@ -74,12 +103,112 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
         showAttendanceDataView();
 
-        new FetchAttendanceTask().execute("1");
+        if(mDeviceID!=null) {
+
+            db.collection("checkin")
+                    .whereEqualTo("deviceid", db.collection("device").document(mDeviceID))
+                    .get()
+                    .continueWith(new Continuation<QuerySnapshot, List<CheckIn>>() {
+
+                        @Override
+                        public List<CheckIn> then(@NonNull Task<QuerySnapshot> task) throws Exception {
+
+                            final List<CheckIn> checkIns = new ArrayList<>();
+
+                            if (task.isSuccessful()) {
+
+
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    Log.d(TAG, document.getId() + " => " + document.getData());
+
+                                    final CheckIn checkIn = new CheckIn();
+
+                                    checkIn.setCheckID(document.getId());
+                                    checkIn.setCheckInTime(document.getTimestamp("checkintime"));
+                                    checkIn.setCheckOutTime(document.get("checkouttime") != null ? document.getTimestamp("checkouttime") : null);
+                                    Event event = new Event();
+                                    event.setDocumenteference(document.getDocumentReference("eventid"));
+
+                                    checkIn.setEvent(event);
+
+
+                                    checkIns.add(checkIn);
+
+                                }
+
+
+                            } else {
+                                showErrorMessage();
+                                Log.w(TAG, "Error getting documents.", task.getException());
+                            }
+
+                            return checkIns;
+                        }
+                    })
+                    .continueWith(new Continuation<List<CheckIn>, List<CheckIn>>() {
+                        @Override
+                        public List<CheckIn> then(@NonNull Task<List<CheckIn>> task) throws Exception {
+
+                            final List<CheckIn> checkIns = task.getResult();
+
+                            for (final CheckIn checkIn : checkIns) {
+                                checkIn.getEvent().getDocumentreference().get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                    @Override
+                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                        Log.d(TAG, documentSnapshot.getId() + " => " + documentSnapshot.getData());
+
+                                        final Event event = new Event(documentSnapshot.getId(), documentSnapshot.get("description").toString(), documentSnapshot.getTimestamp("starttime"), documentSnapshot.getTimestamp("endtime"));
+
+                                        DocumentReference locationRef = documentSnapshot.getDocumentReference("locationid");
+
+                                        locationRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                            @Override
+                                            public void onSuccess(DocumentSnapshot documentSnapshot) {
+
+                                                Log.d(TAG, documentSnapshot.getId() + " => " + documentSnapshot.getData());
+
+                                                Location location = documentSnapshot.toObject(Location.class);
+
+                                                event.setLocation(location);
+
+
+                                            }
+                                        });
+
+                                        checkIn.setEvent(event);
+
+                                        //Making sure we reach the end of the list before setting the attendance recyclerview adapter
+                                        if (checkIns.lastIndexOf(checkIn) == checkIns.size() - 1) {
+                                            Log.d(TAG, "Setting up Attendance Adapter - CheckIn(0): " + checkIns.get(0).getCheckInTime().toDate() + " - Event: " + checkIns.get(0).getEvent().getDescription() + " - " + (checkIns.get(0).getEvent().getStarttime() != null ? checkIns.get(0).getEvent().getStarttime() : ""));
+                                            mAttendanceAdapter.setmAttendanceData(checkIns);
+                                        }
+                                    }
+                                });
+
+                            }
+
+                            return checkIns;
+                        }
+                    }).addOnSuccessListener(new OnSuccessListener<List<CheckIn>>() {
+                @Override
+                public void onSuccess(List<CheckIn> checkIns) {
+                    showAttendanceDataView();
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    showErrorMessage();
+                }
+            });
+        }
+
+
+
 
     }
 
     @Override
-    public void onClick(String attendanceForEvent) {
+    public void onClick(CheckIn attendanceForEvent) {
         Context context = this;
         Class destinationClass = AttendanceDetailActivity.class;
 
@@ -159,7 +288,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
             if(attendanceData!=null)
             {
                 showAttendanceDataView();
-                mAttendanceAdapter.setmAttendanceData(attendanceData);
+                //mAttendanceAdapter.setmAttendanceData(attendanceData);
             }
             else
             {
@@ -180,7 +309,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        Context context = getApplicationContext();
+        final Context context = getApplicationContext();
         Intent intent;
 
         switch (item.getItemId())
@@ -196,6 +325,18 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
             case R.id.nav_attendance:
                 intent = new Intent(context, AttendanceActivity.class);
                 startActivity(intent);
+                return true;
+            case R.id.nav_sign_out:
+                AuthUI.getInstance()
+                        .signOut(this)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if(task.isSuccessful()) {
+                                    Intent logInActivityIntent = new Intent(context, LoginActivity.class);
+                                    startActivity(logInActivityIntent);
+                                }
+                            }
+                        });
                 return true;
         }
 

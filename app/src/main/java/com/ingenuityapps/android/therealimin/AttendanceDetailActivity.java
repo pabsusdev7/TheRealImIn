@@ -5,8 +5,11 @@ import android.databinding.DataBindingUtil;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
+import com.google.firebase.firestore.GeoPoint;
+import com.ingenuityapps.android.therealimin.data.CheckIn;
 import com.ingenuityapps.android.therealimin.databinding.ActivityAttendanceDetailBinding;
 import com.ingenuityapps.android.therealimin.utilities.LocationUtils;
 
@@ -15,6 +18,7 @@ import java.text.SimpleDateFormat;
 
 public class AttendanceDetailActivity extends AppCompatActivity {
 
+    private static final String TAG = AttendanceDetailActivity.class.getSimpleName();
     private ActivityAttendanceDetailBinding mDetailBinding;
 
     @Override
@@ -32,36 +36,30 @@ public class AttendanceDetailActivity extends AppCompatActivity {
         if (intentThatStartedThisActivity != null) {
             if (intentThatStartedThisActivity.hasExtra(Intent.EXTRA_TEXT)) {
 
-                String intentData = intentThatStartedThisActivity.getStringExtra(Intent.EXTRA_TEXT);
+                final CheckIn intentData = intentThatStartedThisActivity.getParcelableExtra(Intent.EXTRA_TEXT);
                 try {
-                    String[] intentDataList = intentData.split(";");
 
-                    for(String record:intentDataList)
-                    {
-                        final String[] recordFields = record.split("\\|");
-                        if(recordFields.length==9)
-                        {
-                            SimpleDateFormat formatter = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy");
-                            SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm");
-                            SimpleDateFormat checkInTimeFormatter = new SimpleDateFormat("hh:mm:ss a");
-                            SimpleDateFormat dateFormatter = new SimpleDateFormat("MMMM dd, yyyy");
-                            mDetailBinding.primaryInfo.event.setText(recordFields[1]);
-                            mDetailBinding.primaryInfo.date.setText(dateFormatter.format(formatter.parse(recordFields[2])));
-                            mDetailBinding.primaryInfo.locationMap.setText(recordFields[4]);
-                            mDetailBinding.primaryInfo.locationDescription.setText(getResources().getString(R.string.show_directions));
-                            mDetailBinding.primaryInfo.locationDescription.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    LocationUtils.openLocationInMap(getApplicationContext(),new BigDecimal(recordFields[5]), new BigDecimal(recordFields[6]));
-                                }
-                            });
-                            mDetailBinding.primaryInfo.startTime.setText(timeFormatter.format(formatter.parse(recordFields[2])));
-                            mDetailBinding.primaryInfo.endTime.setText(timeFormatter.format(formatter.parse(recordFields[3])));
-
-                            mDetailBinding.extraDetails.checkin.setText(checkInTimeFormatter.format(formatter.parse(recordFields[7])));
-                            mDetailBinding.extraDetails.checkout.setText(!recordFields[8].equals("0") ? checkInTimeFormatter.format(formatter.parse(recordFields[8])) : getResources().getString(R.string.no_data));
+                    SimpleDateFormat formatter = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy");
+                    SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm");
+                    SimpleDateFormat checkInTimeFormatter = new SimpleDateFormat("hh:mm:ss a");
+                    SimpleDateFormat dateFormatter = new SimpleDateFormat("MMMM dd, yyyy");
+                    mDetailBinding.primaryInfo.event.setText(intentData.getEvent().getDescription());
+                    mDetailBinding.primaryInfo.date.setText(dateFormatter.format(formatter.parse(intentData.getEvent().getStarttime().toDate().toString())));
+                    mDetailBinding.primaryInfo.locationMap.setText(intentData.getEvent().getLocation().getDescription());
+                    mDetailBinding.primaryInfo.locationDescription.setText(getResources().getString(R.string.show_directions));
+                    mDetailBinding.primaryInfo.locationDescription.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            LocationUtils.openLocationInMap(getApplicationContext(),intentData.getEvent().getLocation().getGeolocation());
                         }
-                    }
+                    });
+                    mDetailBinding.primaryInfo.startTime.setText(timeFormatter.format(formatter.parse(intentData.getEvent().getStarttime().toDate().toString())));
+                    mDetailBinding.primaryInfo.endTime.setText(timeFormatter.format(formatter.parse(intentData.getEvent().getEndtime().toDate().toString())));
+
+                    mDetailBinding.extraDetails.checkin.setText(checkInTimeFormatter.format(formatter.parse(intentData.getCheckInTime().toDate().toString())));
+                    Log.d(TAG,intentData.getCheckOutTime().toDate().toString());
+                    mDetailBinding.extraDetails.checkout.setText((intentData.getCheckOutTime().toDate().getTime() > 0) ? checkInTimeFormatter.format(formatter.parse(intentData.getCheckOutTime().toDate().toString())) : getResources().getString(R.string.no_data));
+
                 }catch (Exception ex)
                 {
                     ex.printStackTrace();

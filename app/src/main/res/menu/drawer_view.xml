@@ -13,5 +13,9 @@
             android:id="@+id/nav_attendance"
             android:icon="@drawable/ic_menu_attendance"
             android:title="@string/title_attendance" />
+        <item
+            android:id="@+id/nav_sign_out"
+            android:icon="@drawable/ic_menu_sign_out"
+            android:title="@string/title_sign_out" />
     </group>
 </menu>

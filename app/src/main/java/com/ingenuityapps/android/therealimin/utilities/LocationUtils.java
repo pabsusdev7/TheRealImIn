@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
+import com.google.firebase.firestore.GeoPoint;
 import com.ingenuityapps.android.therealimin.CheckInActivity;
 
 import java.math.BigDecimal;
@@ -18,8 +19,8 @@ public class LocationUtils {
 
     private static final String TAG = LocationUtils.class.getSimpleName();
 
-    public static void openLocationInMap(Context context, BigDecimal lat, BigDecimal lon) {
-        Uri geoLocation = Uri.parse("geo:" + lat + "," + lon);
+    public static void openLocationInMap(Context context, GeoPoint location) {
+        Uri geoLocation = Uri.parse("geo:" + location.getLatitude() + "," + location.getLongitude());
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(geoLocation);

@@ -15,6 +15,7 @@ import com.ingenuityapps.android.therealimin.R;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.List;
 
 /**
  * Created by pabloalbuja on 6/2/18.
@@ -22,13 +23,13 @@ import java.text.SimpleDateFormat;
 
 public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.AttendanceAdapterViewHolder> {
 
-    private String[] mAttendanceData;
+    private List<CheckIn> mAttendanceData;
 
     private final AttendanceAdapterOnClickHandler mClickHandler;
     private static final String TAG = AttendanceAdapter.class.getSimpleName();
 
     public interface AttendanceAdapterOnClickHandler{
-        void onClick(String attendanceForEvent);
+        void onClick(CheckIn attendanceForEvent);
 
     }
 
@@ -39,7 +40,7 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
 
     public class AttendanceAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        public final TextView mAttendanceTextView;
+        //public final TextView mAttendanceTextView;
         public final TextView mAttendanceEventTitle;
         public final TextView mAttendanceEventDate;
         public final ImageView mAttendanceEventCI;
@@ -47,7 +48,7 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
         public AttendanceAdapterViewHolder(View view)
         {
             super(view);
-            mAttendanceTextView = (TextView) view.findViewById(R.id.tv_attendance_data);
+            //mAttendanceTextView = (TextView) view.findViewById(R.id.tv_attendance_data);
             mAttendanceEventTitle = (TextView) view.findViewById(R.id.tv_event_title);
             mAttendanceEventDate = (TextView) view.findViewById(R.id.tv_event_date);
             mAttendanceEventCI = (ImageView) view.findViewById(R.id.iv_event_checkin);
@@ -57,7 +58,7 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
         @Override
         public void onClick(View view) {
             int adapterPosition = getAdapterPosition();
-            String attendanceForEvent = mAttendanceData[adapterPosition];
+            CheckIn attendanceForEvent = mAttendanceData.get(adapterPosition);
             mClickHandler.onClick(attendanceForEvent);
 
         }
@@ -83,14 +84,14 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
         SimpleDateFormat formatter = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy");
         SimpleDateFormat simpleDate = new SimpleDateFormat("MM/dd/yyyy");
 
-        String attendanceForEvent = mAttendanceData[position];
-        holder.mAttendanceTextView.setText(attendanceForEvent);
+        CheckIn attendanceForEvent = mAttendanceData.get(position);
+        //holder.mAttendanceTextView.setText(attendanceForEvent);
 
         try {
-            String [] attendanceForEventDetail = attendanceForEvent.split("\\|");
-            holder.mAttendanceEventTitle.setText(attendanceForEventDetail[1]);
-            holder.mAttendanceEventDate.setText(simpleDate.format(formatter.parse(attendanceForEventDetail[2])));
-            holder.mAttendanceEventCI.setImageResource(!attendanceForEventDetail[8].equals("0") ? R.drawable.ic_check_out : R.drawable.ic_check_in);
+            //String [] attendanceForEventDetail = attendanceForEvent.split("\\|");
+            holder.mAttendanceEventTitle.setText(attendanceForEvent.getEvent().getDescription());
+            holder.mAttendanceEventDate.setText(simpleDate.format(formatter.parse(attendanceForEvent.getEvent().getStarttime().toDate().toString())));
+            holder.mAttendanceEventCI.setImageResource(attendanceForEvent.getCheckOutTime()!=null ? R.drawable.ic_check_out : R.drawable.ic_check_in);
 
         } catch (ParseException e) {
             e.printStackTrace();
@@ -102,10 +103,10 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
     public int getItemCount() {
         if(mAttendanceData == null) return 0;
 
-        return mAttendanceData.length;
+        return mAttendanceData.size();
     }
 
-    public void setmAttendanceData(String[] attendanceData)
+    public void setmAttendanceData(List<CheckIn> attendanceData)
     {
         mAttendanceData = attendanceData;
         notifyDataSetChanged();

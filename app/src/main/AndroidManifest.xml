@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:allowBackup="true"
@@ -14,22 +15,28 @@
         android:roundIcon="@mipmap/ic_launcher_imin2_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".CheckInActivity">
+        <activity android:name=".CheckInActivity"
+            android:label="@string/title_activity_checkin"/>
+
+        <service android:name=".GeofenceTransitionsIntentService" />
+
+        <activity android:name=".AttendanceActivity"
+            android:label="@string/title_activity_attendance"/>
+        <activity
+            android:name=".AttendanceDetailActivity"
+            android:label="@string/title_activity_attendance_detail"
+            android:parentActivityName=".AttendanceActivity" />
+        <activity android:name=".CheckedInActivity" />
+        <activity android:name=".EventDetailActivity" />
+        <activity
+            android:name=".LoginActivity"
+            android:label="@string/title_activity_login">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <service android:name=".GeofenceTransitionsIntentService" />
-
-        <activity android:name=".AttendanceActivity" />
-        <activity
-            android:name=".AttendanceDetailActivity"
-            android:parentActivityName=".AttendanceActivity" />
-        <activity android:name=".CheckedInActivity" />
-        <activity android:name=".EventDetailActivity"></activity>
     </application>
 
 </manifest>
