@@ -24,7 +24,6 @@
                 android:gravity="center"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
-                android:text="You're currently checked into EVENT. You'll be checked out as soon as you leave the location."
                 android:textAlignment="center"
                 android:textColor="@color/white"
                 android:textStyle="bold"
@@ -83,7 +82,6 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:text="12:50"
                     android:textSize="20sp" />
 
 

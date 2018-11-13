@@ -185,7 +185,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                         public void onFinish() {
                             Log.d(TAG, "Done!");
 
-                            mEventTimer.setText("Event concluded");
+                            mEventTimer.setText(getResources().getString(R.string.timer_done));
 
                             DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkin_id);
 
@@ -240,7 +240,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                                         setUpEventInfoContainer(event, true);
                                                         mEventInfoContainer.setVisibility(View.VISIBLE);
                                                         //Hide/Show CheckedIn Controls
-                                                        mCheckedInStatus.setText("You're currently checked into " + event.getDescription() + ". You'll be checked out as soon as you leave "+event.getLocation().getDescription());
+                                                        mCheckedInStatus.setText(String.format(getResources().getString(R.string.checkedin_message),event.getDescription(),event.getLocation().getDescription()));
                                                         mCheckedInStatus.setVisibility(View.VISIBLE);
                                                         mEventTimerContainer.setVisibility(View.VISIBLE);
                                                         mEventsSpinner.setVisibility(View.GONE);

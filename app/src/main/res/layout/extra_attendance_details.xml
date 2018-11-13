@@ -9,10 +9,8 @@
         android:layout_height="match_parent"
         android:background="@color/detail_accent_pane_background"
         android:paddingBottom="@dimen/attendance_detail_vertical_padding"
-        android:paddingEnd="@dimen/attendance_detail_horizontal_padding"
-        android:paddingLeft="@dimen/attendance_detail_horizontal_padding"
-        android:paddingRight="@dimen/attendance_detail_horizontal_padding"
         android:paddingStart="@dimen/attendance_detail_horizontal_padding"
+        android:paddingEnd="@dimen/attendance_detail_horizontal_padding"
         android:paddingTop="@dimen/attendance_detail_vertical_padding">
 
         <!-- This guideline divides the layout into a left and right half and is used for alignment -->
@@ -28,7 +26,7 @@
             style="@style/DetailLabel"
             android:text="@string/checkin_label"
             app:layout_constraintBottom_toTopOf="@+id/checkout_label"
-            app:layout_constraintLeft_toLeftOf="@+id/extra_details"
+            app:layout_constraintStart_toStartOf="@+id/extra_details"
             app:layout_constraintTop_toTopOf="@+id/extra_details"
             app:layout_constraintVertical_bias="0.33"/>
 
@@ -36,23 +34,21 @@
             android:id="@+id/checkin"
             style="@style/ExtraAttendance"
             app:layout_constraintBottom_toBottomOf="@+id/checkin_label"
-            app:layout_constraintLeft_toLeftOf="@+id/horizontal_middle"
-            tools:text="09:00:00 AM"/>
+            app:layout_constraintStart_toStartOf="@+id/horizontal_middle"/>
 
         <TextView
             android:id="@+id/checkout_label"
             style="@style/DetailLabel"
             android:text="@string/checkout_label"
             app:layout_constraintBottom_toBottomOf="@+id/extra_details"
-            app:layout_constraintLeft_toLeftOf="@+id/extra_details"
+            app:layout_constraintStart_toStartOf="@+id/extra_details"
             app:layout_constraintTop_toTopOf="@+id/extra_details"/>
 
         <TextView
             android:id="@+id/checkout"
             style="@style/ExtraAttendance"
             app:layout_constraintBottom_toBottomOf="@+id/checkout_label"
-            app:layout_constraintLeft_toLeftOf="@+id/horizontal_middle"
-            tools:text="10:00:00 AM"/>
+            app:layout_constraintStart_toStartOf="@+id/horizontal_middle"/>
 
     </android.support.constraint.ConstraintLayout>
 </layout>

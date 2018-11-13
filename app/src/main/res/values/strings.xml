@@ -11,7 +11,7 @@
     <string name="label_endtime">End Time:</string>
     <string name="title_location_permission">Location Permission</string>
     <string name="text_location_permission">Location is required to use this application.</string>
-    <string name="ok">Ok</string>
+    <string name="ok">OK</string>
     <string name="label_event">Which event are you planning to attend?</string>
     <string name="toast_checkin">Checked in!</string>
     <string name="title_attendance">Attendance</string>
@@ -48,4 +48,11 @@
     <string name="events_empty_message">No events found</string>
     <string name="desc_school_logo">Organization Logo</string>
     <string name="desc_checkin_status">Check In Status</string>
+    <string name="from_label">From</string>
+    <string name="to_label">To</string>
+    <string name="required_label">Required</string>
+    <string name="timer_done">Event Concluded!</string>
+    <string name="checkedin_message">You are currently checked into %s. You will be checked out
+        as soon as you leave %s
+    </string>
 </resources>
