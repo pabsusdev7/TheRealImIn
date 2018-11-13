@@ -46,4 +46,6 @@
     <string name="timer_title">Timer</string>
     <string name="attendance_empty_message">No results found</string>
     <string name="events_empty_message">No events found</string>
+    <string name="desc_school_logo">Organization Logo</string>
+    <string name="desc_checkin_status">Check In Status</string>
 </resources>

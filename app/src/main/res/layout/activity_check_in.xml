@@ -35,7 +35,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="100dp"
                 android:layout_marginTop="16dp"
-                app:srcCompat="@drawable/school_logo" />
+                app:srcCompat="@drawable/school_logo"
+                android:contentDescription="@string/desc_school_logo" />
 
             <TextView
                 android:id="@+id/tv_event_label"
