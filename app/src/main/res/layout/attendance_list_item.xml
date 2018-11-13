@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="horizontal"
     android:minHeight="?android:attr/listPreferredItemHeight"
     android:paddingBottom="12dp"
     android:paddingLeft="16dp"
@@ -12,57 +11,38 @@
     android:paddingTop="12dp">
 
     <TextView
-        android:id="@+id/tv_attendance_data"
-        style="@style/TextAppearance.AppCompat.Medium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:visibility="gone"/>
-
-    <TextView
         android:id="@+id/tv_event_title"
-        android:layout_width="180dp"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginStart="8dp"
+        android:layout_weight="3"
         android:padding="8dp"
+        android:gravity="center_vertical"
         android:text="The Future According to Jesus"
         android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline" />
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/tv_event_date"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_marginEnd="8dp"
+        android:layout_weight="2"
+        android:gravity="center"
         android:padding="8dp"
         android:text="Date"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toTopOf="@+id/guideline"
-        app:layout_constraintEnd_toStartOf="@+id/iv_event_checkin"
-        app:layout_constraintStart_toEndOf="@+id/tv_event_title"
-        app:layout_constraintTop_toTopOf="@+id/guideline"
-        tools:text="06/06/2018" />
+        android:textSize="14sp"
+        tools:text="06/06/2018 12:35 PM" />
 
     <ImageView
         android:id="@+id/iv_event_checkin"
         android:layout_width="@dimen/list_icon"
         android:layout_height="@dimen/list_icon"
         android:layout_marginEnd="16dp"
-        android:src="@drawable/ic_check_in"
-        app:layout_constraintBottom_toTopOf="@+id/guideline"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline"
-        android:layout_marginRight="16dp" />
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_weight="0"
+        android:gravity="center"
+        android:src="@drawable/ic_check_in" />
 
-    <android.support.constraint.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.5" />
-
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

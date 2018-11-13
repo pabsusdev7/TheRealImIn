@@ -16,18 +16,24 @@
 
     <TextView
         android:id="@+id/tv_error_message_display"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:layout_marginTop="212dp"
+        android:layout_gravity="center"
         android:padding="16dp"
         android:text="@string/attendance_error_message"
-        android:textAlignment="viewStart"
-        android:visibility="invisible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:gravity="start" />
+        android:textAlignment="center"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/tv_empty_message_display"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:gravity="center_horizontal"
+        android:padding="16dp"
+        android:text="@string/attendance_empty_message"
+        android:textAlignment="center"
+        android:visibility="invisible" />
 
     <ProgressBar
         android:id="@+id/pb_loading_indicator"

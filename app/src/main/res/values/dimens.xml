@@ -3,10 +3,16 @@
 
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="list_icon">50dp</dimen>
+    <dimen name="list_icon">40dp</dimen>
 
     <dimen name="attendance_detail_horizontal_padding">32dp</dimen>
     <dimen name="attendance_detail_vertical_padding">16dp</dimen>
+
+    <!--
+Refer to App Widget Documentation for margin information
+http://developer.android.com/guide/topics/appwidgets/index.html#CreatingLayout
+    -->
+    <dimen name="widget_margin">8dp</dimen>
 
 
 </resources>

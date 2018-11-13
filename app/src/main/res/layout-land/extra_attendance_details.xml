@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/extra_details"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/detail_accent_pane_background"
+        android:paddingStart="@dimen/attendance_detail_horizontal_padding"
+        android:paddingLeft="@dimen/attendance_detail_horizontal_padding"
+        android:paddingTop="@dimen/attendance_detail_vertical_padding"
+        android:paddingEnd="@dimen/attendance_detail_horizontal_padding"
+        android:paddingRight="@dimen/attendance_detail_horizontal_padding"
+        android:paddingBottom="@dimen/attendance_detail_vertical_padding">
+
+        <!-- This guideline divides the layout into a left and right half and is used for alignment -->
+        <android.support.constraint.Guideline
+            android:id="@+id/horizontal_middle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <TextView
+            android:id="@+id/checkin_label"
+            style="@style/DetailLabel"
+            android:layout_marginTop="8dp"
+            android:text="@string/checkin_label"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/extra_details" />
+
+        <TextView
+            android:id="@+id/checkin"
+            style="@style/ExtraAttendance"
+            android:layout_marginTop="24dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/checkin_label"
+            tools:text="09:00:00 AM" />
+
+        <TextView
+            android:id="@+id/checkout_label"
+            style="@style/DetailLabel"
+            android:layout_marginBottom="24dp"
+            android:text="@string/checkout_label"
+            app:layout_constraintBottom_toTopOf="@+id/checkout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.501"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/checkout"
+            style="@style/ExtraAttendance"
+            android:layout_marginBottom="32dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="10:00:00 AM" />
+
+
+    </android.support.constraint.ConstraintLayout>
+</layout>

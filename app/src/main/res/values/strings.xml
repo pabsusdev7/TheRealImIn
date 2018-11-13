@@ -39,4 +39,11 @@
     <string name="title_activity_attendance_detail">Attendance Detail</string>
     <string name="title_activity_attendance">Attendance Report</string>
     <string name="title_activity_checkin">Check In</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="empty_view_text">No Upcoming Events</string>
+    <string name="widget_title">Upcoming Events</string>
+    <string name="timer_title">Timer</string>
+    <string name="attendance_empty_message">No results found</string>
+    <string name="events_empty_message">No events found</string>
 </resources>

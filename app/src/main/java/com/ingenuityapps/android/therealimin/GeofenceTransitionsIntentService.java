@@ -3,11 +3,9 @@ package com.ingenuityapps.android.therealimin;
 import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
@@ -20,10 +18,7 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
-import com.ingenuityapps.android.therealimin.utilities.JsonUtils;
-import com.ingenuityapps.android.therealimin.utilities.NetworkUtils;
 
-import java.net.URL;
 import java.util.List;
 
 /**
@@ -65,22 +60,22 @@ public class GeofenceTransitionsIntentService extends IntentService {
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
 
 
-            Log.v(TAG, "GeoFence Transition: " + geofenceTransition);
+            Log.v(TAG, "GeoFence Transition: " + geofenceTransition + ", Triggering Location:" + geofencingEvent.getTriggeringLocation().toString()+", Triggering Geofence: "+geofencingEvent.getTriggeringGeofences().get(0).toString());
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
 
             if(intent!=null)
             {
-                if(intent.hasExtra("checkInID"))
+                if(intent.hasExtra(Constants.SHARED_PREF_CHECKINID))
                 {
-                    final String checkInID = intent.getStringExtra("checkInID");
+                    final String checkInID = intent.getStringExtra(Constants.SHARED_PREF_CHECKINID);
                     try {
 
-                        DocumentReference checkInRef = db.collection("checkin").document(checkInID);
+                        DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkInID);
 
                         checkInRef
-                                .update("checkouttime",Timestamp.now())
+                                .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME,Timestamp.now())
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
@@ -100,6 +95,9 @@ public class GeofenceTransitionsIntentService extends IntentService {
                                 FLAG_UPDATE_CURRENT));
 
                         Log.i(TAG, "Removing GeoFence for CheckIn: "+checkInID);
+                        SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).edit();
+                        editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
+                        editor.apply();
 
                         Intent checkInIntent = new Intent(this, CheckInActivity.class);
                         startActivity(checkInIntent);
@@ -113,20 +111,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 }
             }
 
-            // Get the transition details as a String.
-            /*String geofenceTransitionDetails = getGeofenceTransitionDetails(
-                    this,
-                    geofenceTransition,
-                    triggeringGeofences
-            );*/
-
-            // Send notification and log the transition details.
-            //sendNotification(geofenceTransitionDetails);
-            //Log.i(TAG, geofenceTransitionDetails);
         } else {
             // Log the error.
-            /*Log.e(TAG, getString(R.string.geofence_transition_invalid_type,
-                    geofenceTransition));*/
         }
     }
 

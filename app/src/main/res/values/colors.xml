@@ -12,4 +12,6 @@
     <color name="detail_accent_pane_background">#455A64</color>
     <color name="detail_accent_label">#90A4AE</color>
     <color name="inapp_notification">#33B5E5</color>
+    <color name="widget_background">#a0464e51</color>
+    <color name="red">#e25656</color>
 </resources>

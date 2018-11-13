@@ -15,7 +15,6 @@ public class Location implements Parcelable {
     private String mDescription;
     private GeoPoint mGeoLocation;
     private Float mLocationRadius;
-    private DocumentReference mDocumentReference;
 
     public Location(){}
 
@@ -72,7 +71,6 @@ public class Location implements Parcelable {
         dest.writeDouble(this.mGeoLocation.getLatitude());
         dest.writeDouble(this.mGeoLocation.getLongitude());
         dest.writeValue(this.mLocationRadius);
-        dest.writeParcelable((Parcelable) this.mDocumentReference, flags);
     }
 
     protected Location(Parcel in) {
@@ -83,7 +81,6 @@ public class Location implements Parcelable {
         Double lng = in.readDouble();
         this.mGeoLocation = new GeoPoint(lat, lng);
         this.mLocationRadius = (Float) in.readValue(Float.class.getClassLoader());
-        this.mDocumentReference = in.readParcelable(DocumentReference.class.getClassLoader());
     }
 
     public static final Parcelable.Creator<Location> CREATOR = new Parcelable.Creator<Location>() {
@@ -97,12 +94,4 @@ public class Location implements Parcelable {
             return new Location[size];
         }
     };
-
-    public DocumentReference getDocumentreference() {
-        return mDocumentReference;
-    }
-
-    public void setDocumentreference(DocumentReference mDocumentReference) {
-        this.mDocumentReference = mDocumentReference;
-    }
 }

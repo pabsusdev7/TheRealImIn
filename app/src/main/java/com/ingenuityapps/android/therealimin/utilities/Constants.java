@@ -14,4 +14,31 @@ public final class Constants {
     public static final Integer MAX_MINUTES_CHECKIN_BEFOREEVENT = 15;
     public static final long ONE_MINUTE_IN_MILLIS=60000;
     public static final String SHARED_PREFS = "shared_preferences";
+    public static final String SHARED_PREF_DEVICEID = "deviceid";
+    public static final String SHARED_PREF_CHECKEDIN = "checkedin";
+    public static final String SHARED_PREF_CHECKINID = "checkinid";
+    public static final String SHARED_PREF_EVENTID = "eventid";
+    public static final String SHARED_PREF_EVENTENDTIME = "eventendtime";
+
+    //FIRESTORE
+    public static final String FIRESTORE_CHECKIN = "checkin";
+    public static final String FIRESTORE_CHECKIN_CHECKINTIME = "checkintime";
+    public static final String FIRESTORE_CHECKIN_CHECKOUTTIME = "checkouttime";
+    public static final String FIRESTORE_CHECKIN_DEVICEID = "deviceid";
+    public static final String FIRESTORE_CHECKIN_EVENTID = "eventid";
+    public static final String FIRESTORE_DEVICE = "device";
+    public static final String FIRESTORE_DEVICE_ATTENDEEID = "attendeeid";
+    public static final String FIRESTORE_DEVICE_IMEI = "imei";
+    public static final String FIRESTORE_EVENT = "event";
+    public static final String FIRESTORE_EVENT_DESCRIPTION = "description";
+    public static final String FIRESTORE_EVENT_STARTTIME = "starttime";
+    public static final String FIRESTORE_EVENT_ENDTIME = "endtime";
+    public static final String FIRESTORE_EVENT_REQUIRED = "required";
+    public static final String FIRESTORE_EVENT_LOCATIONID = "locationid";
+    public static final String FIRESTORE_EVENTCATEGORY = "eventcategory";
+    public static final String FIRESTORE_EVENTCATEGORY_DESCRIPTION = "description";
+    public static final String FIRESTORE_LOCATION= "location";
+    public static final String FIRESTORE_LOCATION_DESCRIPTION= "description";
+    public static final String FIRESTORE_LOCATION_GEOLOCATION= "geolocation";
+    public static final String FIRESTORE_LOCATION_RADIUS= "radius";
 }

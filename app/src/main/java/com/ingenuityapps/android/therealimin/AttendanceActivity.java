@@ -3,13 +3,10 @@ package com.ingenuityapps.android.therealimin;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
-import android.os.Handler;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -26,9 +23,7 @@ import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.SuccessContinuation;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -39,13 +34,12 @@ import com.ingenuityapps.android.therealimin.data.CheckIn;
 import com.ingenuityapps.android.therealimin.data.Event;
 import com.ingenuityapps.android.therealimin.data.Location;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
-import com.ingenuityapps.android.therealimin.utilities.NetworkUtils;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Callable;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class AttendanceActivity extends AppCompatActivity implements AttendanceAdapter.AttendanceAdapterOnClickHandler {
 
@@ -53,11 +47,16 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
     private FirebaseFirestore db;
 
-    private RecyclerView mRecyclerView;
+    @BindView(R.id.rv_attendance)
+    RecyclerView mRecyclerView;
     private DividerItemDecoration mDividerItemDecoration;
     private AttendanceAdapter mAttendanceAdapter;
-    private TextView mErrorMessageDisplay;
-    private ProgressBar mLoadingIndicator;
+    @BindView(R.id.tv_error_message_display)
+    TextView mErrorMessageDisplay;
+    @BindView(R.id.pb_loading_indicator)
+    ProgressBar pb_loading_indicator;
+    @BindView(R.id.tv_empty_message_display)
+    TextView mEmptyMessageDisplay;
 
     private String mDeviceID;
 
@@ -65,20 +64,18 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance);
+        ButterKnife.bind(this);
 
         db = FirebaseFirestore.getInstance();
 
         SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
 
-        mDeviceID = prefs.getString("deviceid",null);
+        mDeviceID = prefs.getString(Constants.SHARED_PREF_DEVICEID,null);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(true);
         actionBar.setIcon(R.mipmap.ic_launcher_imin2_round);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.rv_attendance);
-        mErrorMessageDisplay = (TextView) findViewById(R.id.tv_error_message_display);
-        mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL, false);
 
@@ -105,8 +102,8 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
         if(mDeviceID!=null) {
 
-            db.collection("checkin")
-                    .whereEqualTo("deviceid", db.collection("device").document(mDeviceID))
+            db.collection(Constants.FIRESTORE_CHECKIN)
+                    .whereEqualTo(Constants.FIRESTORE_CHECKIN_DEVICEID, db.collection(Constants.FIRESTORE_DEVICE).document(mDeviceID))
                     .get()
                     .continueWith(new Continuation<QuerySnapshot, List<CheckIn>>() {
 
@@ -124,10 +121,10 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                                     final CheckIn checkIn = new CheckIn();
 
                                     checkIn.setCheckID(document.getId());
-                                    checkIn.setCheckInTime(document.getTimestamp("checkintime"));
-                                    checkIn.setCheckOutTime(document.get("checkouttime") != null ? document.getTimestamp("checkouttime") : null);
+                                    checkIn.setCheckInTime(document.getTimestamp(Constants.FIRESTORE_CHECKIN_CHECKINTIME));
+                                    checkIn.setCheckOutTime(document.get(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME) != null ? document.getTimestamp(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME) : null);
                                     Event event = new Event();
-                                    event.setDocumenteference(document.getDocumentReference("eventid"));
+                                    event.setEventID(document.getDocumentReference(Constants.FIRESTORE_CHECKIN_EVENTID).getId());
 
                                     checkIn.setEvent(event);
 
@@ -152,14 +149,14 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                             final List<CheckIn> checkIns = task.getResult();
 
                             for (final CheckIn checkIn : checkIns) {
-                                checkIn.getEvent().getDocumentreference().get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                db.collection(Constants.FIRESTORE_EVENT).document(checkIn.getEvent().getEventID()).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                     @Override
                                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                                         Log.d(TAG, documentSnapshot.getId() + " => " + documentSnapshot.getData());
 
-                                        final Event event = new Event(documentSnapshot.getId(), documentSnapshot.get("description").toString(), documentSnapshot.getTimestamp("starttime"), documentSnapshot.getTimestamp("endtime"));
+                                        final Event event = new Event(documentSnapshot.getId(), documentSnapshot.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), documentSnapshot.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), documentSnapshot.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), documentSnapshot.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
 
-                                        DocumentReference locationRef = documentSnapshot.getDocumentReference("locationid");
+                                        DocumentReference locationRef = documentSnapshot.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID);
 
                                         locationRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                             @Override
@@ -190,16 +187,23 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                             return checkIns;
                         }
                     }).addOnSuccessListener(new OnSuccessListener<List<CheckIn>>() {
-                @Override
-                public void onSuccess(List<CheckIn> checkIns) {
-                    showAttendanceDataView();
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    showErrorMessage();
-                }
-            });
+                        @Override
+                        public void onSuccess(List<CheckIn> checkIns) {
+                            if(!checkIns.isEmpty()){
+                                showAttendanceDataView();
+                            }else{
+                                showNoResultsMessage();
+
+                            }
+
+
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            showErrorMessage();
+                        }
+                    });
         }
 
 
@@ -218,6 +222,11 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
     }
 
+    private void showNoResultsMessage() {
+        mRecyclerView.setVisibility(View.INVISIBLE);
+        mEmptyMessageDisplay.setVisibility(View.VISIBLE);
+    }
+
     private void showAttendanceDataView() {
         /* First, make sure the error is invisible */
         mErrorMessageDisplay.setVisibility(View.INVISIBLE);
@@ -229,72 +238,6 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         mRecyclerView.setVisibility(View.INVISIBLE);
         /* Then, show the error */
         mErrorMessageDisplay.setVisibility(View.VISIBLE);
-    }
-
-    public class FetchAttendanceTask extends AsyncTask<String, Void, String[]>{
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mLoadingIndicator.setVisibility(View.VISIBLE);
-        }
-
-
-        @Override
-        protected String[] doInBackground(String... strings) {
-
-            if(strings.length==0)
-            {
-                return null;
-            }
-
-            String deviceID = strings[0];
-            HashMap<String,String> params = new HashMap<String,String>();
-            params.put("device",deviceID);
-            URL attendanceRequestUrl = NetworkUtils.buildUrl("checkins",params, "attendance");
-
-            try
-            {
-                String jsonResponse = NetworkUtils.getResponseFromHttpUrl(attendanceRequestUrl);
-                Log.v(TAG, "jsonResponse: " + jsonResponse);
-
-                String[] attendanceData = jsonResponse.split(";");
-
-                return attendanceData;
-
-                /*SimpleDateFormat formatter = new SimpleDateFormat("E MMM dd HH:mm:ss Z yyyy");
-
-                for (String checkin : jsonResponse.split(";")) {
-
-                    String[] checkinFields = checkin.split("\\|");
-                    if (checkinFields.length > 0 && checkinFields.length == 5) {
-
-
-                    }
-
-                }*/
-
-            }catch (Exception ex)
-            {
-                ex.printStackTrace();
-                return null;
-            }
-
-        }
-
-        @Override
-        protected void onPostExecute(String[] attendanceData) {
-            mLoadingIndicator.setVisibility(View.INVISIBLE);
-            if(attendanceData!=null)
-            {
-                showAttendanceDataView();
-                //mAttendanceAdapter.setmAttendanceData(attendanceData);
-            }
-            else
-            {
-                showErrorMessage();
-            }
-        }
     }
 
     @Override

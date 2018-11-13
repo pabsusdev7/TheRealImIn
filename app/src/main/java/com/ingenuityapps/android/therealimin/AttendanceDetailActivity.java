@@ -6,6 +6,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.google.firebase.firestore.GeoPoint;
@@ -55,6 +56,7 @@ public class AttendanceDetailActivity extends AppCompatActivity {
                     });
                     mDetailBinding.primaryInfo.startTime.setText(timeFormatter.format(formatter.parse(intentData.getEvent().getStarttime().toDate().toString())));
                     mDetailBinding.primaryInfo.endTime.setText(timeFormatter.format(formatter.parse(intentData.getEvent().getEndtime().toDate().toString())));
+                    mDetailBinding.primaryInfo.tvRequired.setVisibility(intentData.getEvent().getRequired()?View.VISIBLE:View.INVISIBLE);
 
                     mDetailBinding.extraDetails.checkin.setText(checkInTimeFormatter.format(formatter.parse(intentData.getCheckInTime().toDate().toString())));
                     Log.d(TAG,intentData.getCheckOutTime().toDate().toString());
@@ -69,5 +71,16 @@ public class AttendanceDetailActivity extends AppCompatActivity {
         }
 
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

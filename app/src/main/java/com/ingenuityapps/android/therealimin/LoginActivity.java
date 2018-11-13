@@ -78,17 +78,15 @@ public class LoginActivity extends AppCompatActivity {
 
             if (resultCode == RESULT_OK) {
                 // Successfully signed in
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-                final String userID = user.getUid();
-
-                CollectionReference deviceCollectionRef = db.collection("device");
+                CollectionReference deviceCollectionRef = db.collection(Constants.FIRESTORE_DEVICE);
 
 
                 if(mDeviceID!=null) {
 
                     deviceCollectionRef
-                            .whereEqualTo("imei", mDeviceID)
+                            .whereEqualTo(Constants.FIRESTORE_DEVICE_IMEI, mDeviceID)
                             .get()
                             .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                 @Override
@@ -99,28 +97,37 @@ public class LoginActivity extends AppCompatActivity {
                                         {
                                             for (QueryDocumentSnapshot document : task.getResult()) {
                                                 Log.d(TAG, document.getId() + " => " + document.getData());
-                                                if(!document.get("attendeeid").equals(userID)){
-                                                    Log.w(TAG,"Somebody's got other's phone! Firebase User ID ("+userID+") does not match Device's registered User ID ("+document.get("attendeeid")+")");
+                                                if(!document.get(Constants.FIRESTORE_DEVICE_ATTENDEEID).equals(user.getUid())){
+                                                    Log.w(TAG,"Somebody's got other's phone! Firebase User ID ("+user.getUid()+") does not match Device's registered User ID ("+document.get("attendeeid")+")");
                                                     Toast toast = Toast.makeText(getApplicationContext(), "This device is not registered for your account. Please, try again or use a different account.", Toast.LENGTH_LONG);
                                                     toast.show();
+                                                    user.delete();
                                                     signOut();
                                                     return;
                                                 }
+                                                SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).edit();
+                                                editor.putString("deviceid", document.getId());
+                                                editor.apply();
+
                                             }
 
                                         }else{
                                             Map<String, Object> data = new HashMap<>();
-                                            data.put("attendeeid", userID);
-                                            data.put("imei", mDeviceID);
+                                            data.put(Constants.FIRESTORE_DEVICE_ATTENDEEID, user.getUid());
+                                            data.put(Constants.FIRESTORE_DEVICE_IMEI, mDeviceID);
 
 
-                                            db.collection("device")
+                                            db.collection(Constants.FIRESTORE_DEVICE)
                                                     .add(data)
                                                     .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                                                         @Override
                                                         public void onSuccess(DocumentReference documentReference) {
                                                             Toast toast = Toast.makeText(getApplicationContext(), "This device has been registered to your account!", Toast.LENGTH_LONG);
                                                             toast.show();
+                                                            SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).edit();
+                                                            editor.putString(Constants.SHARED_PREF_DEVICEID, documentReference.getId());
+                                                            editor.apply();
+
                                                         }
                                                     })
                                                     .addOnFailureListener(new OnFailureListener() {
@@ -132,7 +139,7 @@ public class LoginActivity extends AppCompatActivity {
                                         }
 
                                         Intent checkInActivityIntent = new Intent(getApplicationContext(), CheckInActivity.class);
-                                        checkInActivityIntent.putExtra("deviceid", mDeviceID);
+                                        checkInActivityIntent.putExtra(Constants.SHARED_PREF_DEVICEID, mDeviceID);
                                         startActivity(checkInActivityIntent);
 
                                     }else{
@@ -165,11 +172,6 @@ public class LoginActivity extends AppCompatActivity {
         else {
 
             mDeviceID = telephonyManager.getDeviceId();
-
-            SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).edit();
-            editor.putString("deviceid", mDeviceID);
-            editor.apply();
-
 
             Log.d(TAG,"Device's ID = " + mDeviceID);
         }

@@ -22,7 +22,7 @@ public class Event implements Parcelable {
     private Timestamp mStartTime;
     private Timestamp mEndTime;
     private Location mLocation;
-    private DocumentReference mDocumentReference;
+    private Boolean mRequired;
 
     public Event()
     {}
@@ -36,12 +36,13 @@ public class Event implements Parcelable {
         setLocation(location);
     }
 
-    public Event(String eventID, String description, Timestamp startTime, Timestamp endTime)
+    public Event(String eventID, String description, Timestamp startTime, Timestamp endTime, Boolean required)
     {
         setEventID(eventID);
         setDescription(description);
         setStarttime(startTime);
         setEndtime(endTime);
+        setRequired(required);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -53,7 +54,7 @@ public class Event implements Parcelable {
         mEndTime = new Timestamp(new Date(in.readLong()));
         //mLocation = in.readTypedObject(Location.CREATOR);
         mLocation = in.readParcelable(Location.class.getClassLoader());
-        mDocumentReference = in.readParcelable(DocumentReference.class.getClassLoader());
+        mRequired = in.readInt()>0?true:false;
     }
 
     public static final Creator<Event> CREATOR = new Creator<Event>() {
@@ -124,15 +125,15 @@ public class Event implements Parcelable {
         dest.writeLong(mEndTime.toDate().getTime());
         //dest.writeTypedObject(mLocation, flags);
         dest.writeParcelable(mLocation, flags);
-        dest.writeParcelable((Parcelable) mDocumentReference, flags);
+        dest.writeInt(mRequired ? 1 : 0);
 
     }
 
-    public DocumentReference getDocumentreference() {
-        return mDocumentReference;
+    public Boolean getRequired() {
+        return mRequired;
     }
 
-    public void setDocumenteference(DocumentReference mDocumentReference) {
-        this.mDocumentReference = mDocumentReference;
+    public void setRequired(Boolean mRequired) {
+        this.mRequired = mRequired;
     }
 }

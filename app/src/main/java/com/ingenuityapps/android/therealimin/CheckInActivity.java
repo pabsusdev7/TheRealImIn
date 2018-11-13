@@ -3,23 +3,19 @@ package com.ingenuityapps.android.therealimin;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.app.usage.UsageEvents;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.databinding.DataBindingUtil;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
-import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
-import android.provider.SyncStateContract;
+import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Parcelable;
+import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -27,9 +23,6 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -38,7 +31,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -46,7 +38,6 @@ import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -60,34 +51,28 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
-import com.ingenuityapps.android.therealimin.data.CheckIn;
 import com.ingenuityapps.android.therealimin.data.Event;
-import com.ingenuityapps.android.therealimin.databinding.ActivityCheckInBinding;
-import com.ingenuityapps.android.therealimin.databinding.ActivityEventDetailBinding;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
-import com.ingenuityapps.android.therealimin.utilities.JsonUtils;
 import com.ingenuityapps.android.therealimin.utilities.LocationUtils;
-import com.ingenuityapps.android.therealimin.utilities.NetworkUtils;
 
-import org.json.JSONException;
-
-import java.math.BigDecimal;
-import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.AbstractCollection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class CheckInActivity extends AppCompatActivity implements LocationListener {
 
@@ -98,36 +83,57 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     private List<Geofence> mGeofenceList;
     private String mDeviceID;
 
-    private FusedLocationProviderClient mFusedLocationClient;
     private LocationManager mLocationManager;
     private Location mCurrentLocation;
     private GeofencingClient mGeofencingClient;
     private PendingIntent mGeofencePendingIntent;
-    private DrawerLayout mDrawerLayout;
-    private ProgressBar mLoadingIndicator;
-    private TextView mErrorMessage;
-    private TextView mCheckedInStatus;
-    private View mEventContainer;
-    private View mEventInfoContainer;
-    private Spinner mEventsSpinner;
-    private TextView mEventDescription;
-    private TextView mEventLocation;
-    private TextView mEventLocationDirections;
-    private TextView mEventDate;
-    private TextView mEventStartTime;
-    private TextView mEventEndTime;
-    private Button mCheckIn;
+    private CountDownTimer mTimer;
+
+    @BindView(R.id.tv_empty_message_display)
+    TextView mEmptyMessage;
+    @BindView(R.id.pb_loading_indicator)
+    ProgressBar mLoadingIndicator;
+    @BindView(R.id.tv_error_message_display)
+    TextView mErrorMessage;
+    @BindView(R.id.tv_checkin_status)
+    TextView mCheckedInStatus;
+    @BindView(R.id.event_container)
+    View mEventContainer;
+    @BindView(R.id.event_info_container)
+    View mEventInfoContainer;
+    @BindView(R.id.timer_container)
+    View mEventTimerContainer;
+    @BindView(R.id.tv_timer)
+    TextView mEventTimer;
+    @BindView(R.id.event_spinner)
+    Spinner mEventsSpinner;
+    @BindView(R.id.event)
+    TextView mEventDescription;
+    @BindView(R.id.tv_event_label)
+    TextView mEventLabel;
+    @BindView(R.id.location_map)
+    TextView mEventLocation;
+    @BindView(R.id.location_description)
+    TextView mEventLocationDirections;
+    @BindView(R.id.date)
+    TextView mEventDate;
+    @BindView(R.id.start_time)
+    TextView mEventStartTime;
+    @BindView(R.id.end_time)
+    TextView mEventEndTime;
+    @BindView(R.id.tv_required)
+    TextView mEventRequired;
+    @BindView(R.id.btn_checkin)
+    Button mCheckIn;
 
     private static final String TAG = CheckInActivity.class.getSimpleName();
-
-
-    private ActivityCheckInBinding mCheckInBinding;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mCheckInBinding = DataBindingUtil.setContentView(this, R.layout.activity_check_in);
+        setContentView(R.layout.activity_check_in);
+        ButterKnife.bind(this);
 
         db = FirebaseFirestore.getInstance();
 
@@ -135,52 +141,148 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         actionBar.setDisplayShowHomeEnabled(true);
         actionBar.setIcon(R.mipmap.ic_launcher_imin2_round);
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         mGeofencingClient = LocationServices.getGeofencingClient(this);
         mGeofenceList = new ArrayList<Geofence>();
         mEvents = new HashMap<String, Event>();
-        mEventContainer = (View) findViewById(R.id.event_container);
-        mEventInfoContainer = (View) findViewById(R.id.event_info_container);
-        mCheckedInStatus = (TextView) findViewById(R.id.tv_checkin_status);
-        mEventDescription = (TextView) findViewById(R.id.event);
-        mEventDate = (TextView) findViewById(R.id.date);
-        mEventLocation = (TextView) findViewById(R.id.location_map);
-        mEventLocationDirections = (TextView) findViewById(R.id.location_description);
-        mEventStartTime = (TextView) findViewById(R.id.start_time);
-        mEventEndTime = (TextView) findViewById(R.id.end_time);
-        mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
-        mErrorMessage = (TextView) findViewById(R.id.tv_error_message_display);
-        mCheckIn = (Button) findViewById(R.id.btn_checkin);
-        mDrawerLayout = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
+
+        getCurrentLocation(null);
+
+        final SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
+        mDeviceID = prefs.getString(Constants.SHARED_PREF_DEVICEID,null);
 
 
-        mEventsSpinner = (Spinner) findViewById(R.id.event_spinner);
+
+
+        if (prefs.contains(Constants.SHARED_PREF_CHECKEDIN) && prefs.contains(Constants.SHARED_PREF_EVENTID) && prefs.contains(Constants.SHARED_PREF_CHECKINID) && prefs.contains(Constants.SHARED_PREF_EVENTENDTIME)) {
+            Boolean checkedin = prefs.getBoolean(Constants.SHARED_PREF_CHECKEDIN,false);
+            String event_id = prefs.getString(Constants.SHARED_PREF_EVENTID, null);
+            final String checkin_id = prefs.getString(Constants.SHARED_PREF_CHECKINID, null);
+            Long event_endtime = prefs.getLong(Constants.SHARED_PREF_EVENTENDTIME,0);
+            if (checkedin && event_id!=null && checkin_id!=null) {
+
+                Log.d(TAG,"User is currently checked in!");
+
+                final SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss");
+                final Calendar calendar = Calendar.getInstance();
+                final SharedPreferences.Editor editor = prefs.edit();
+
+                if(mTimer==null) {
+                    mTimer = new CountDownTimer((event_endtime - Timestamp.now().getSeconds()) * 1000, 1000) {
+
+                        public void onTick(long millisUntilFinished) {
+                            Log.d(TAG, "Seconds remaining: " + millisUntilFinished / 1000);
+
+                            calendar.setTimeInMillis(millisUntilFinished);
+                            calendar.set(Calendar.HOUR_OF_DAY, (int) (millisUntilFinished / 3600000));
+
+                            mEventTimer.setText(timeFormatter.format(calendar.getTime()));
+
+                            if (!prefs.getBoolean(Constants.SHARED_PREF_CHECKEDIN, false))
+                                cancel();
+                        }
+
+                        public void onFinish() {
+                            Log.d(TAG, "Done!");
+
+                            mEventTimer.setText("Event concluded");
+
+                            DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkin_id);
+
+                            checkInRef
+                                    .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, Timestamp.now())
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out Successful!", Toast.LENGTH_LONG);
+                                            toast.show();
+
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
+                                            toast.show();
+                                        }
+                                    });
+
+                            editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
+                            editor.apply();
+
+                            Intent checkInIntent = new Intent(getApplicationContext(), CheckInActivity.class);
+                            startActivity(checkInIntent);
+                        }
+                    };
+
+                    mTimer.start();
+                }
+
+                db.collection(Constants.FIRESTORE_EVENT).document(event_id)
+                        .get()
+                        .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    DocumentSnapshot document = task.getResult();
+                                    if (document.exists()) {
+                                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                                        final Event event = new Event(document.getId(), document.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), document.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), document.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), document.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
+
+                                        document.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID).get()
+                                                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                                    @Override
+                                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                                        com.ingenuityapps.android.therealimin.data.Location location = documentSnapshot.toObject(com.ingenuityapps.android.therealimin.data.Location.class);
+                                                        event.setLocation(location);
+
+
+                                                        setUpEventInfoContainer(event, true);
+                                                        mEventInfoContainer.setVisibility(View.VISIBLE);
+                                                        //Hide/Show CheckedIn Controls
+                                                        mCheckedInStatus.setText("You're currently checked into " + event.getDescription() + ". You'll be checked out as soon as you leave "+event.getLocation().getDescription());
+                                                        mCheckedInStatus.setVisibility(View.VISIBLE);
+                                                        mEventTimerContainer.setVisibility(View.VISIBLE);
+                                                        mEventsSpinner.setVisibility(View.GONE);
+                                                        mCheckIn.setVisibility(View.GONE);
+                                                        mEventLabel.setVisibility(View.GONE);
+
+
+                                                    }
+                                                });
+                                    } else {
+                                        Log.d(TAG, "No such document");
+                                    }
+                                } else {
+                                    Log.d(TAG, "Get failed with ", task.getException());
+                                }
+                            }
+                        });
+
+
+
+
+
+
+            }
+            else
+                loadEvents();
+        }
+        else
+            loadEvents();
 
         mEventsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id) {
 
                 if (pos > 0) {
-                    SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm");
-                    SimpleDateFormat dateFormatter = new SimpleDateFormat("MMMM dd, yyyy");
 
                     StringWithTag selectedItem = (StringWithTag) adapterView.getItemAtPosition(pos);
-                    final Event event = mEvents.get((String) selectedItem.tag);
-                    mEventDescription.setVisibility(View.GONE);
-                    //mEventDescription.setText(event.getDescription());
-                    mEventDate.setText(dateFormatter.format(event.getStarttime().toDate()));
-                    mEventLocation.setText(event.getLocation().getDescription());
-                    mEventLocationDirections.setText(R.string.show_directions);
-                    mEventLocationDirections.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            LocationUtils.openLocationInMap(getApplicationContext(), event.getLocation().getGeolocation());
-                        }
-                    });
-                    mEventStartTime.setText(timeFormatter.format(event.getStarttime().toDate()));
-                    mEventEndTime.setText(timeFormatter.format(event.getEndtime().toDate()));
+
+
+                    Event event = mEvents.get((String)selectedItem.tag);
+
+                    setUpEventInfoContainer(event, false);
 
                     mEventInfoContainer.setVisibility(View.VISIBLE);
                 } else
@@ -200,13 +302,10 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
                 final Event e = mEvents.get(((StringWithTag) mEventsSpinner.getSelectedItem()).tag);
                 if (e != null) {
-                    Log.d(TAG,"1");
                     if (mDeviceID != null) {
-                        Log.d(TAG,"2");
                         try {
                             getCurrentLocation(null);
                             if (mCurrentLocation != null) {
-                                Log.d(TAG,"3");
                                 Location eventLocation = new Location(mLocationManager.getBestProvider(createFineCriteria(), true));
                                 eventLocation.setLatitude(e.getLocation().getGeolocation().getLatitude());
                                 eventLocation.setLongitude(e.getLocation().getGeolocation().getLongitude());
@@ -221,13 +320,13 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                     if (mCurrentLocation.distanceTo(eventLocation) <= e.getLocation().getRadius()) {
 
                                         Map<String, Object> data = new HashMap<>();
-                                        data.put("checkintime", Timestamp.now());
-                                        data.put("checkouttime", null);
-                                        data.put("eventid", e.getDocumentreference());
-                                        data.put("deviceid",db.collection("device").document(mDeviceID));
+                                        data.put(Constants.FIRESTORE_CHECKIN_CHECKINTIME, Timestamp.now());
+                                        data.put(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, null);
+                                        data.put(Constants.FIRESTORE_CHECKIN_EVENTID, db.collection(Constants.FIRESTORE_EVENT).document(e.getEventID()));
+                                        data.put(Constants.FIRESTORE_CHECKIN_DEVICEID,db.collection(Constants.FIRESTORE_DEVICE).document(mDeviceID));
 
 
-                                        db.collection("checkin")
+                                        db.collection(Constants.FIRESTORE_CHECKIN)
                                                 .add(data)
                                                 .continueWith(new Continuation<DocumentReference, DocumentReference>() {
                                                     @Override
@@ -263,10 +362,27 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                                 })
                                                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                                                     @Override
-                                                    public void onSuccess(DocumentReference documentReference) {
+                                                    public void onSuccess(final DocumentReference documentReference) {
                                                         Log.d(TAG, "CheckIn DocumentSnapshot written with ID: " + documentReference.getId());
+
+                                                        final SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
+                                                        final SharedPreferences.Editor editor = prefs.edit();
+
+
+                                                        editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, true);
+                                                        editor.putString(Constants.SHARED_PREF_EVENTID,e.getEventID());
+                                                        editor.putString(Constants.SHARED_PREF_CHECKINID, documentReference.getId());
+                                                        editor.putLong(Constants.SHARED_PREF_EVENTENDTIME, e.getEndtime().getSeconds());
+                                                        editor.apply();
+
+                                                        Intent checkedInActivityIntent = new Intent(getApplicationContext(), CheckInActivity.class);
+                                                        startActivity(checkedInActivityIntent);
+
+
                                                         Toast toast = Toast.makeText(getApplicationContext(), "Check In Successful!", Toast.LENGTH_LONG);
                                                         toast.show();
+
+
 
 
                                                     }
@@ -279,16 +395,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                                         toast.show();
                                                     }
                                                 });
-
-
-
-
-                                        showCheckInMessage(e.getDescription());
-                                        Intent checkedInActivityIntent = new Intent(getApplicationContext(), CheckInActivity.class);
-                                        checkedInActivityIntent.putExtra("checkedin", true);
-                                        checkedInActivityIntent.putExtra("checkedin_event", e.getDescription());
-                                        startActivity(checkedInActivityIntent);
-
 
 
                                     } else {
@@ -323,32 +429,43 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         });
 
 
-        mEventsSpinner.setEnabled(true);
-        mCheckIn.setEnabled(true);
 
-        SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
-        mDeviceID = prefs.getString("deviceid",null);
 
-        Intent intentThatStartedThisActivity = getIntent();
 
-        if (intentThatStartedThisActivity != null) {
-            if (intentThatStartedThisActivity.hasExtra("checkedin") && intentThatStartedThisActivity.hasExtra("checkedin_event")) {
-                Boolean checkedin = intentThatStartedThisActivity.getBooleanExtra("checkedin", false);
-                String checkedin_event = intentThatStartedThisActivity.getStringExtra("checkedin_event");
-                if (checkedin) {
-                    mEventsSpinner.setEnabled(false);
-                    mCheckIn.setEnabled(false);
-                    mCheckIn.setBackgroundColor(getResources().getColor(R.color.checkedin_status));
-                    mCheckedInStatus.setText("You're currently checked into " + checkedin_event + ". You'll be checked out as soon as you leave the location.");
-                    mCheckedInStatus.setVisibility(View.VISIBLE);
-                }
-            }
-        }
-
-        loadEvents();
 
 
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if(mTimer!=null)mTimer.cancel();
+    }
+
+    private void setUpEventInfoContainer(final Event event, boolean showTitle) {
+
+
+        SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("MMMM dd, yyyy");
+
+        mEventDescription.setVisibility(showTitle? View.VISIBLE: View.GONE);
+        mEventDescription.setText(event.getDescription());
+        mEventDate.setText(dateFormatter.format(event.getStarttime().toDate()));
+        mEventLocation.setText(event.getLocation().getDescription());
+        mEventLocationDirections.setText(R.string.show_directions);
+        mEventLocationDirections.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LocationUtils.openLocationInMap(getApplicationContext(), event.getLocation().getGeolocation());
+            }
+        });
+        mEventStartTime.setText(timeFormatter.format(event.getStarttime().toDate()));
+        mEventEndTime.setText(timeFormatter.format(event.getEndtime().toDate()));
+        mEventRequired.setVisibility(event.getRequired()?View.VISIBLE:View.INVISIBLE);
+    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -366,9 +483,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         Intent intent;
 
         switch (item.getItemId()) {
-            case android.R.id.home:
-                mDrawerLayout.openDrawer(GravityCompat.START);
-                return true;
             case R.id.nav_home:
                 intent = new Intent(context, CheckInActivity.class);
                 startActivity(intent);
@@ -419,8 +533,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         Source source = Source.CACHE;
 
-        db.collection("event")
-                .whereGreaterThan("endtime",Timestamp.now())
+        db.collection(Constants.FIRESTORE_EVENT)
+                .whereGreaterThan(Constants.FIRESTORE_EVENT_ENDTIME,Timestamp.now())
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -431,17 +545,14 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 Log.d(TAG, document.getId() + " => " + document.getData());
 
-                                //Event ev = new Event(Integer.parseInt(eventFields[0]), eventFields[1], eventFields[2], new BigDecimal(eventFields[3]), new BigDecimal(eventFields[4]), new BigDecimal(eventFields[5]), formatter.parse(eventFields[6]), formatter.parse(eventFields[7]));
-                                final Event event = new Event(document.getId(), document.get("description").toString(), document.getTimestamp("starttime"), document.getTimestamp("endtime"));
-                                event.setDocumenteference(document.getReference());
+                                final Event event = new Event(document.getId(), document.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), document.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), document.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), document.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
 
-                                DocumentReference locationRef = document.getDocumentReference("locationid");
+                                DocumentReference locationRef = document.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID);
 
                                 locationRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                     @Override
                                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                                         com.ingenuityapps.android.therealimin.data.Location location = documentSnapshot.toObject(com.ingenuityapps.android.therealimin.data.Location.class);
-                                        location.setDocumentreference(documentSnapshot.getReference());
                                         event.setLocation(location);
 
                                         events.add(new StringWithTag(event.getDescription(), event.getEventID()));
@@ -455,11 +566,14 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                             }
 
                             if (events != null) {
-                                showEventsDataView();
                                 mEventsAdapter = new ArrayAdapter<StringWithTag>(getBaseContext(), android.R.layout.simple_spinner_item, events);
                                 mEventsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                                 mEventsSpinner.setAdapter(mEventsAdapter);
-                                mEventContainer.setVisibility(View.VISIBLE);
+                                if(!mEventsSpinner.getAdapter().isEmpty())
+                                    showEventsDataView();
+                                else{
+                                    showNoResultsMessage();
+                                }
                             } else {
                                 showErrorMessage();
                             }
@@ -473,6 +587,11 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
     }
 
+    private void showNoResultsMessage() {
+        mEventContainer.setVisibility(View.INVISIBLE);
+        mEmptyMessage.setVisibility(View.VISIBLE);
+    }
+
     private void showEventsDataView() {
         mEventContainer.setVisibility(View.VISIBLE);
         mErrorMessage.setVisibility(View.INVISIBLE);
@@ -481,45 +600,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     private void showErrorMessage() {
         mEventContainer.setVisibility(View.INVISIBLE);
         mErrorMessage.setVisibility(View.VISIBLE);
-    }
-
-    private class HasDeviceCheckedIntoEvent extends AsyncTask<Integer, Void, Boolean>
-    {
-
-        @Override
-        protected Boolean doInBackground(Integer... integers) {
-
-            if(integers.length == 2)
-            {
-                HashMap<String,String> params = new HashMap<String,String>();
-                params.put("event",integers[0].toString());
-                params.put("device",integers[1].toString());
-                URL checkinURL = NetworkUtils.buildUrl("checkins", params);
-
-                try
-                {
-                    String response = NetworkUtils.getResponseFromHttpUrl(checkinURL);
-                    if(response!=null)
-                    {
-                        String []checkin = response.split("\\|");
-                        Log.v(TAG,"Device " + integers[1] + " has checked in for event " + integers[0] + " at " + checkin[1] + " (CheckIn ID: " + checkin[0]);
-                        return true;
-                    }
-                    else
-                    {
-                        Log.v(TAG,"Device " + integers[1] + " has not checked in for event " + integers[0]);
-                        return false;
-                    }
-                }catch (Exception ex)
-                {
-                    ex.printStackTrace();
-                    return false;
-                }
-            }
-
-            return false;
-
-        }
     }
 
     private GeofencingRequest getGeofencingRequest() {
@@ -540,9 +620,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
             return mGeofencePendingIntent;
         }
         Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
-        intent.putExtra("checkInID", checkInID);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
-        // calling addGeofences() and removeGeofences().
+        intent.putExtra(Constants.SHARED_PREF_CHECKINID, checkInID);
         mGeofencePendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.
                 FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
@@ -628,46 +706,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
             return false;
         } else {
             mLocationManager.requestLocationUpdates(mLocationManager.getBestProvider(createFineCriteria(),true),400,1, this);
-            return true;
-        }
-    }
-
-    public boolean checkDeviceInfoPermission() {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.READ_PHONE_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.READ_PHONE_STATE)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                new AlertDialog.Builder(this)
-                        .setTitle(R.string.title_device_permission)
-                        .setMessage(R.string.text_device_permission)
-                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                //Prompt the user once explanation has been shown
-                                ActivityCompat.requestPermissions(CheckInActivity.this,
-                                        new String[]{Manifest.permission.READ_PHONE_STATE},
-                                        Constants.PERMISSIONS_REQUEST_PHONE_STATE);
-                            }
-                        })
-                        .create()
-                        .show();
-
-
-            } else {
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_PHONE_STATE},
-                        Constants.PERMISSIONS_REQUEST_PHONE_STATE);
-            }
-            return false;
-        } else {
             return true;
         }
     }

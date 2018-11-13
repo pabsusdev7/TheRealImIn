@@ -17,6 +17,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * Created by pabloalbuja on 6/2/18.
  */
@@ -40,18 +43,18 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
 
     public class AttendanceAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        //public final TextView mAttendanceTextView;
-        public final TextView mAttendanceEventTitle;
-        public final TextView mAttendanceEventDate;
-        public final ImageView mAttendanceEventCI;
+        @BindView(R.id.tv_event_title)
+        public TextView mAttendanceEventTitle;
+        @BindView(R.id.tv_event_date)
+        public TextView mAttendanceEventDate;
+        @BindView(R.id.iv_event_checkin)
+        public ImageView mAttendanceEventCI;
 
         public AttendanceAdapterViewHolder(View view)
         {
             super(view);
-            //mAttendanceTextView = (TextView) view.findViewById(R.id.tv_attendance_data);
-            mAttendanceEventTitle = (TextView) view.findViewById(R.id.tv_event_title);
-            mAttendanceEventDate = (TextView) view.findViewById(R.id.tv_event_date);
-            mAttendanceEventCI = (ImageView) view.findViewById(R.id.iv_event_checkin);
+
+            ButterKnife.bind(this, view);
             view.setOnClickListener(this);
         }
 
@@ -85,10 +88,8 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
         SimpleDateFormat simpleDate = new SimpleDateFormat("MM/dd/yyyy");
 
         CheckIn attendanceForEvent = mAttendanceData.get(position);
-        //holder.mAttendanceTextView.setText(attendanceForEvent);
 
         try {
-            //String [] attendanceForEventDetail = attendanceForEvent.split("\\|");
             holder.mAttendanceEventTitle.setText(attendanceForEvent.getEvent().getDescription());
             holder.mAttendanceEventDate.setText(simpleDate.format(formatter.parse(attendanceForEvent.getEvent().getStarttime().toDate().toString())));
             holder.mAttendanceEventCI.setImageResource(attendanceForEvent.getCheckOutTime()!=null ? R.drawable.ic_check_out : R.drawable.ic_check_in);
