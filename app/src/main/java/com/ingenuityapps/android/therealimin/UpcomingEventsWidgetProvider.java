@@ -39,6 +39,11 @@ public class UpcomingEventsWidgetProvider extends AppWidgetProvider {
         PendingIntent appPendingIntent = PendingIntent.getActivity(context, 0, appIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         views.setPendingIntentTemplate(R.id.gv_events, appPendingIntent);
 
+        Intent intentSync = new Intent(context, UpcomingEventsWidgetProvider.class);
+        intentSync.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        PendingIntent pendingSync = PendingIntent.getBroadcast(context,0, intentSync, PendingIntent.FLAG_UPDATE_CURRENT);
+        views.setOnClickPendingIntent(R.id.btn_refresh,pendingSync);
+
         return views;
     }
 

@@ -5,7 +5,8 @@
     <string name="title_notifications">Notifications</string>
     <string name="title_checkin">Check In</string>
     <string name="event_label">Select an Event:</string>
-    <string name="error_message">There was an error while loading the upcoming events. Please, try again later.</string>
+    <string name="events_error_message">There was an error while loading the upcoming events. Please, try again later.</string>
+    <string name="orgs_error_message">There was an error while loading organizations. Please, try again later.</string>
     <string name="label_location">Location:</string>
     <string name="label_starttime">Start Time:</string>
     <string name="label_endtime">End Time:</string>
@@ -46,6 +47,7 @@
     <string name="timer_title">Timer</string>
     <string name="attendance_empty_message">No results found</string>
     <string name="events_empty_message">No events found</string>
+    <string name="orgs_empty_message">No organizations found</string>
     <string name="desc_school_logo">Organization Logo</string>
     <string name="desc_checkin_status">Check In Status</string>
     <string name="from_label">From</string>
@@ -55,4 +57,24 @@
     <string name="checkedin_message">You are currently checked into %s. You will be checked out
         as soon as you leave %s
     </string>
+    <string name="org_logo_url">https://ingenuityapps.com/wp-content/uploads/imin/logos/%s.png</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="cancel">Cancel</string>
+    <string name="use_password">Use password</string>
+    <string name="bio_sign_in">Biometric Sign in</string>
+    <string name="password">Password</string>
+    <string name="fingerprint_description">Confirm fingerprint to continue</string>
+    <string name="fingerprint_hint">Touch sensor</string>
+    <string name="password_description">Enter your store password to continue</string>
+    <string name="fingerprint_not_recognized">Fingerprint not recognized. Try again</string>
+    <string name="fingerprint_success">Fingerprint recognized</string>
+    <string name="bio_auth_done">Biometric Authentication successful</string>
+    <string name="new_fingerprint_enrolled_description">A new fingerprint was added to this device, so your password is required.</string>
+    <string name="use_fingerprint_in_future">Use fingerprint in the future</string>
+    <string name="use_fingerprint_to_authenticate_title">Use fingerprint to authenticate</string>
+    <string name="use_fingerprint_to_authenticate_key">use_fingerprint_to_authenticate_key</string>
+    <string name="description_fingerprint_icon">Fingerprint icon</string>
+    <string name="next">Next</string>
+    <string name="desc_refresh">Refresh</string>
 </resources>

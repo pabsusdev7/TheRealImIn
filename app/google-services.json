@@ -1,6 +1,6 @@
 {
   "project_info": {
-    "project_number": "1026875846465",
+    "project_number": "xxxxxxxxxx",
     "firebase_url": "https://imin-27c39.firebaseio.com",
     "project_id": "imin-27c39",
     "storage_bucket": "imin-27c39.appspot.com"
@@ -8,28 +8,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1026875846465:android:eab36455c1e10348",
+        "mobilesdk_app_id": "xxxxxxxxxxxxx",
         "android_client_info": {
           "package_name": "com.ingenuityapps.android.therealimin"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1026875846465-dopl6mkkqtfcofa3663i458juvm7vmts.apps.googleusercontent.com",
+          "client_id": "xxxxxxxxx",
           "client_type": 1,
           "android_info": {
             "package_name": "com.ingenuityapps.android.therealimin",
-            "certificate_hash": "6cf2e216803aa584a4454e2168419eec55de2ad5"
+            "certificate_hash": "xxxxxxxxx"
           }
         },
         {
-          "client_id": "1026875846465-5m710igthlset4os95har99ppqedq1m0.apps.googleusercontent.com",
+          "client_id": "xxxxxxxxxxxxx",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCB_8roaO30_-HImdgO0vfEEK7x2rzq8AQ"
+          "current_key": "xxxxxxxxxxxxxxxx"
         }
       ],
       "services": {
@@ -40,7 +40,7 @@
           "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "1026875846465-5m710igthlset4os95har99ppqedq1m0.apps.googleusercontent.com",
+              "client_id": "xxxxxxxxx",
               "client_type": 3
             }
           ]

@@ -28,7 +28,7 @@ public class AttendanceDetailActivity extends AppCompatActivity {
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(true);
-        actionBar.setIcon(R.mipmap.ic_launcher_imin2_round);
+        actionBar.setIcon(R.mipmap.ic_launcher_round);
 
         mDetailBinding = DataBindingUtil.setContentView(this, R.layout.activity_attendance_detail);
 

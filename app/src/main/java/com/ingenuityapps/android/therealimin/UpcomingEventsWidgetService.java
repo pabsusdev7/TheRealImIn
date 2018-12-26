@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -22,6 +24,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class UpcomingEventsWidgetService extends RemoteViewsService {
     @Override
@@ -67,9 +71,13 @@ class UpcomingEventsRemoteViewsFactory implements RemoteViewsService.RemoteViews
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR,2);//Display all events before the day after tomorrow
 
+        DocumentReference orgIdReference = db.collection(Constants.FIRESTORE_ORGANIZATION).document(mContext.getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).getString(Constants.SHARED_PREF_ORGID,null));
+
         QuerySnapshot result = Tasks.await(db.collection(Constants.FIRESTORE_EVENT)
                 .whereGreaterThan(Constants.FIRESTORE_EVENT_STARTTIME,new Date(Calendar.getInstance().getTimeInMillis() - (Constants.MAX_MINUTES_CHECKIN_BEFOREEVENT * Constants.ONE_MINUTE_IN_MILLIS)))
                 .whereLessThan(Constants.FIRESTORE_EVENT_STARTTIME, calendar.getTime())
+                .whereEqualTo(Constants.FIRESTORE_EVENT_ORGID,orgIdReference)
+                .whereEqualTo(Constants.FIRESTORE_EVENT_ACTIVE, true)
                 .orderBy(Constants.FIRESTORE_EVENT_STARTTIME,Query.Direction.ASCENDING)
                 .get());
 
@@ -115,7 +123,10 @@ class UpcomingEventsRemoteViewsFactory implements RemoteViewsService.RemoteViews
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        views.setImageViewResource(R.id.iv_event_checkin, event.getRequired() ? R.drawable.ic_required : null);
+        if(event.getRequired())
+            views.setImageViewResource(R.id.iv_event_checkin, R.drawable.ic_required);
+        else
+            views.setViewVisibility(R.id.iv_event_checkin, View.INVISIBLE);
 
         Intent fillInIntent = new Intent();
         views.setOnClickFillInIntent(R.id.tv_event_title,fillInIntent);

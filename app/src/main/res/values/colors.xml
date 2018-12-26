@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
-    <color name="white">#ffffff</color>
-    <color name="checked_in">#6ccf53</color>
+    <color name="colorPrimary">#FF8982</color>
+    <color name="colorPrimaryDark">@color/colorPrimary</color>
+    <color name="colorPrimaryLight">#41A4B9</color>
+    <color name="colorAccent">#96CEB4</color>
+    <color name="background">#C2C2C2</color>
+    <color name="checked_in">@color/colorAccent</color>
     <color name="checkedin_status">#cfd1ce</color>
     <color name="primary_text">#212121</color>
     <color name="secondary_text">#727272</color>
@@ -12,6 +13,9 @@
     <color name="detail_accent_pane_background">#455A64</color>
     <color name="detail_accent_label">#90A4AE</color>
     <color name="inapp_notification">#33B5E5</color>
-    <color name="widget_background">#a0464e51</color>
+    <color name="widget_background">@color/colorPrimary</color>
     <color name="red">#e25656</color>
+    <color name="warning_color">#f4511e</color>
+    <color name="hint_color">#42000000</color>
+    <color name="success_color">#009688</color>
 </resources>

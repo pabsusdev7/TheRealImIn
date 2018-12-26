@@ -47,8 +47,9 @@ public class LoginActivity extends AppCompatActivity {
     private String mDeviceID;
     // Choose authentication providers
     List<AuthUI.IdpConfig> providers = Arrays.asList(
-            new AuthUI.IdpConfig.EmailBuilder().build(),
-            new AuthUI.IdpConfig.GoogleBuilder().build());
+            new AuthUI.IdpConfig.EmailBuilder().build()
+            //,new AuthUI.IdpConfig.GoogleBuilder().build()
+            );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +64,7 @@ public class LoginActivity extends AppCompatActivity {
         startActivityForResult(
                 AuthUI.getInstance()
                         .createSignInIntentBuilder()
-                        .setLogo(R.mipmap.ic_launcher_foreground_imin2)
+                        .setLogo(R.mipmap.ic_launcher)
                         .setAvailableProviders(providers)
                         .build(),
                 RC_SIGN_IN);
@@ -139,12 +140,16 @@ public class LoginActivity extends AppCompatActivity {
                                         }
 
                                         Intent checkInActivityIntent = new Intent(getApplicationContext(), CheckInActivity.class);
-                                        checkInActivityIntent.putExtra(Constants.SHARED_PREF_DEVICEID, mDeviceID);
                                         startActivity(checkInActivityIntent);
 
                                     }else{
 
                                         Log.d(TAG, "Error getting Device documents: ", task.getException());
+                                        if(task.getException().getMessage().contains(Constants.ERR_PERMISSION_DENIED)) {
+                                            Toast toast = Toast.makeText(getApplicationContext(), "The account you used does not belong to the organization. Please, try again.", Toast.LENGTH_LONG);
+                                            toast.show();
+                                            signOut();
+                                        }
                                     }
                                 }
                             });

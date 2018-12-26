@@ -2,27 +2,31 @@ package com.ingenuityapps.android.therealimin;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.fingerprint.FingerprintManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Parcelable;
-import android.os.PersistableBundle;
+import android.preference.PreferenceManager;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyPermanentlyInvalidatedException;
+import android.security.keystore.KeyProperties;
 import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -34,13 +38,13 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
@@ -51,8 +55,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -62,17 +64,39 @@ import com.google.firebase.firestore.Source;
 import com.ingenuityapps.android.therealimin.data.Event;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
 import com.ingenuityapps.android.therealimin.utilities.LocationUtils;
+import com.ingenuityapps.android.therealimin.utilities.StringWithTag;
+import com.jakewharton.picasso.OkHttp3Downloader;
+import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
 
 public class CheckInActivity extends AppCompatActivity implements LocationListener {
 
@@ -82,6 +106,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     private Map<String, Event> mEvents;
     private List<Geofence> mGeofenceList;
     private String mDeviceID;
+    private String mOrganizationID;
 
     private LocationManager mLocationManager;
     private Location mCurrentLocation;
@@ -105,6 +130,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     View mEventTimerContainer;
     @BindView(R.id.tv_timer)
     TextView mEventTimer;
+    @BindView(R.id.iv_school_logo)
+    ImageView mOrganizationLogo;
     @BindView(R.id.event_spinner)
     Spinner mEventsSpinner;
     @BindView(R.id.event)
@@ -128,6 +155,16 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
     private static final String TAG = CheckInActivity.class.getSimpleName();
 
+    private static final String DIALOG_FRAGMENT_TAG = "myFragment";
+    private static final String SECRET_MESSAGE = "Very secret message";
+    private static final String KEY_NAME_NOT_INVALIDATED = "key_not_invalidated";
+    static final String DEFAULT_KEY_NAME = "default_key";
+
+    private KeyStore mKeyStore;
+    private KeyGenerator mKeyGenerator;
+    private SharedPreferences mSharedSettingsPreferences;
+    private SharedPreferences mSharedPreferences;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,7 +176,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(true);
-        actionBar.setIcon(R.mipmap.ic_launcher_imin2_round);
+        actionBar.setIcon(R.mipmap.ic_launcher_round);
 
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         mGeofencingClient = LocationServices.getGeofencingClient(this);
@@ -148,24 +185,25 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         getCurrentLocation(null);
 
-        final SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
-        mDeviceID = prefs.getString(Constants.SHARED_PREF_DEVICEID,null);
+        mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
+        mDeviceID = mSharedPreferences.getString(Constants.SHARED_PREF_DEVICEID,null);
+        mOrganizationID = mSharedPreferences.getString(Constants.SHARED_PREF_ORGID,null);
+
+        loadOrganizationLogo();
 
 
-
-
-        if (prefs.contains(Constants.SHARED_PREF_CHECKEDIN) && prefs.contains(Constants.SHARED_PREF_EVENTID) && prefs.contains(Constants.SHARED_PREF_CHECKINID) && prefs.contains(Constants.SHARED_PREF_EVENTENDTIME)) {
-            Boolean checkedin = prefs.getBoolean(Constants.SHARED_PREF_CHECKEDIN,false);
-            String event_id = prefs.getString(Constants.SHARED_PREF_EVENTID, null);
-            final String checkin_id = prefs.getString(Constants.SHARED_PREF_CHECKINID, null);
-            Long event_endtime = prefs.getLong(Constants.SHARED_PREF_EVENTENDTIME,0);
+        if (mSharedPreferences.contains(Constants.SHARED_PREF_CHECKEDIN) && mSharedPreferences.contains(Constants.SHARED_PREF_EVENTID) && mSharedPreferences.contains(Constants.SHARED_PREF_CHECKINID) && mSharedPreferences.contains(Constants.SHARED_PREF_EVENTENDTIME)) {
+            Boolean checkedin = mSharedPreferences.getBoolean(Constants.SHARED_PREF_CHECKEDIN,false);
+            String event_id = mSharedPreferences.getString(Constants.SHARED_PREF_EVENTID, null);
+            final String checkin_id = mSharedPreferences.getString(Constants.SHARED_PREF_CHECKINID, null);
+            Long event_endtime = mSharedPreferences.getLong(Constants.SHARED_PREF_EVENTENDTIME,0);
             if (checkedin && event_id!=null && checkin_id!=null) {
 
                 Log.d(TAG,"User is currently checked in!");
 
                 final SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss");
                 final Calendar calendar = Calendar.getInstance();
-                final SharedPreferences.Editor editor = prefs.edit();
+                final SharedPreferences.Editor editor = mSharedPreferences.edit();
 
                 if(mTimer==null) {
                     mTimer = new CountDownTimer((event_endtime - Timestamp.now().getSeconds()) * 1000, 1000) {
@@ -178,7 +216,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
                             mEventTimer.setText(timeFormatter.format(calendar.getTime()));
 
-                            if (!prefs.getBoolean(Constants.SHARED_PREF_CHECKEDIN, false))
+                            if (!mSharedPreferences.getBoolean(Constants.SHARED_PREF_CHECKEDIN, false))
                                 cancel();
                         }
 
@@ -296,143 +334,82 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
             }
         });
 
-        mCheckIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
-                final Event e = mEvents.get(((StringWithTag) mEventsSpinner.getSelectedItem()).tag);
-                if (e != null) {
-                    if (mDeviceID != null) {
-                        try {
-                            getCurrentLocation(null);
-                            if (mCurrentLocation != null) {
-                                Location eventLocation = new Location(mLocationManager.getBestProvider(createFineCriteria(), true));
-                                eventLocation.setLatitude(e.getLocation().getGeolocation().getLatitude());
-                                eventLocation.setLongitude(e.getLocation().getGeolocation().getLongitude());
-                                Log.d(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
-                                Log.d(TAG, "Event's Location: " + eventLocation.getLatitude() + "," + eventLocation.getLongitude());
+        try {
+            mKeyStore = KeyStore.getInstance("AndroidKeyStore");
+        } catch (KeyStoreException e) {
+            throw new RuntimeException("Failed to get an instance of KeyStore", e);
+        }
+        try {
+            mKeyGenerator = KeyGenerator
+                    .getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+            throw new RuntimeException("Failed to get an instance of KeyGenerator", e);
+        }
+        Cipher defaultCipher;
+        try {
+            defaultCipher = Cipher.getInstance(KeyProperties.KEY_ALGORITHM_AES + "/"
+                    + KeyProperties.BLOCK_MODE_CBC + "/"
+                    + KeyProperties.ENCRYPTION_PADDING_PKCS7);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            throw new RuntimeException("Failed to get an instance of Cipher", e);
+        }
+        mSharedSettingsPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
+        KeyguardManager keyguardManager = getSystemService(KeyguardManager.class);
+        FingerprintManager fingerprintManager = getSystemService(FingerprintManager.class);
 
+        if (!keyguardManager.isKeyguardSecure()) {
+            // Show a message that the user hasn't set up a fingerprint or lock screen.
+            Toast.makeText(this,
+                    "Secure lock screen hasn't set up.\n"
+                            + "Go to 'Settings -> Security -> Fingerprint' to set up a fingerprint",
+                    Toast.LENGTH_LONG).show();
+            mCheckIn.setEnabled(false);
+            return;
+        }
 
-                                if (new Date(Calendar.getInstance().getTimeInMillis() + (Constants.MAX_MINUTES_CHECKIN_BEFOREEVENT * Constants.ONE_MINUTE_IN_MILLIS)).after(e.getStarttime().toDate())
-                                        && new Date(Calendar.getInstance().getTimeInMillis()).before(e.getEndtime().toDate())) {
-
-                                    if (mCurrentLocation.distanceTo(eventLocation) <= e.getLocation().getRadius()) {
-
-                                        Map<String, Object> data = new HashMap<>();
-                                        data.put(Constants.FIRESTORE_CHECKIN_CHECKINTIME, Timestamp.now());
-                                        data.put(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, null);
-                                        data.put(Constants.FIRESTORE_CHECKIN_EVENTID, db.collection(Constants.FIRESTORE_EVENT).document(e.getEventID()));
-                                        data.put(Constants.FIRESTORE_CHECKIN_DEVICEID,db.collection(Constants.FIRESTORE_DEVICE).document(mDeviceID));
-
-
-                                        db.collection(Constants.FIRESTORE_CHECKIN)
-                                                .add(data)
-                                                .continueWith(new Continuation<DocumentReference, DocumentReference>() {
-                                                    @Override
-                                                    public DocumentReference then(@NonNull Task<DocumentReference> task) throws Exception {
-
-
-                                                        DocumentReference checkin = task.getResult();
-
-                                                        mGeofenceList.add(new Geofence.Builder()
-                                                                // Set the request ID of the geofence. This is a string to identify this
-                                                                // geofence.
-                                                                .setRequestId(e.getEventID())
-
-                                                                .setCircularRegion(
-                                                                        e.getLocation().getGeolocation().getLatitude(),
-                                                                        e.getLocation().getGeolocation().getLongitude(),
-                                                                        e.getLocation().getRadius()
-                                                                )
-                                                                .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-                                                                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
-                                                                .build());
-                                                        Log.i(TAG, "Creating GeoFence for: "+e.getLocation().getGeolocation().getLatitude()+","+e.getLocation().getGeolocation().getLongitude()+" - with Radius: "+e.getLocation().getRadius());
-
-                                                        if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                                            if (!checkLocationPermission())
-                                                                return null;
-                                                        }
-                                                        mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent(checkin.getId()));
-                                                        Log.i(TAG, "Adding GeoFence");
-
-                                                        return checkin;
-                                                    }
-                                                })
-                                                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                                                    @Override
-                                                    public void onSuccess(final DocumentReference documentReference) {
-                                                        Log.d(TAG, "CheckIn DocumentSnapshot written with ID: " + documentReference.getId());
-
-                                                        final SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
-                                                        final SharedPreferences.Editor editor = prefs.edit();
-
-
-                                                        editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, true);
-                                                        editor.putString(Constants.SHARED_PREF_EVENTID,e.getEventID());
-                                                        editor.putString(Constants.SHARED_PREF_CHECKINID, documentReference.getId());
-                                                        editor.putLong(Constants.SHARED_PREF_EVENTENDTIME, e.getEndtime().getSeconds());
-                                                        editor.apply();
-
-                                                        Intent checkedInActivityIntent = new Intent(getApplicationContext(), CheckInActivity.class);
-                                                        startActivity(checkedInActivityIntent);
-
-
-                                                        Toast toast = Toast.makeText(getApplicationContext(), "Check In Successful!", Toast.LENGTH_LONG);
-                                                        toast.show();
-
-
-
-
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Log.w(TAG, "Error adding CheckIn document", e);
-                                                        Toast toast = Toast.makeText(getApplicationContext(), "Check In UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
-                                                        toast.show();
-                                                    }
-                                                });
-
-
-                                    } else {
-                                        Toast toast = Toast.makeText(getApplicationContext(), "You're out of range! Get closer to the event's location at " + e.getLocation().getDescription() + ".", Toast.LENGTH_LONG);
-                                        toast.show();
-                                    }
-
-
-
-                                } else {
-                                    Toast toast = Toast.makeText(getApplicationContext(), "It's not time yet to check in for " + e.getDescription() + ". Check in is available " + Constants.MAX_MINUTES_CHECKIN_BEFOREEVENT + " minutes before the event.", Toast.LENGTH_LONG);
-                                    toast.show();
-                                }
-
-
-
-                            }
-
-
-                        } catch (Exception ex) {
-                            Log.v(TAG, ex.getMessage());
-                            ex.printStackTrace();
-                        }
-
-
-                    }
-                } else {
-                    Toast toast = Toast.makeText(getApplicationContext(), "Please select an event!", Toast.LENGTH_LONG);
-                }
-
-            }
-        });
+        // Now the protection level of USE_FINGERPRINT permission is normal instead of dangerous.
+        // See http://developer.android.com/reference/android/Manifest.permission.html#USE_FINGERPRINT
+        // The line below prevents the false positive inspection from Android Studio
+        // noinspection ResourceType
+        if (!fingerprintManager.hasEnrolledFingerprints()) {
+            mCheckIn.setEnabled(false);
+            // This happens when no fingerprints are registered.
+            Toast.makeText(this,
+                    "Go to 'Settings -> Security -> Fingerprint' and register at least one" +
+                            " fingerprint",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        createKey(DEFAULT_KEY_NAME, true);
+        createKey(KEY_NAME_NOT_INVALIDATED, false);
+        mCheckIn.setEnabled(true);
+        mCheckIn.setOnClickListener(
+                new CheckInButtonClickListener(defaultCipher, DEFAULT_KEY_NAME));
 
 
 
 
 
 
+
+    }
+
+
+    private void loadOrganizationLogo() {
+
+        String imageUrl = String.format(getResources().getString(R.string.org_logo_url),mOrganizationID!=null ? mOrganizationID : "default");
+        Log.d(TAG,"Logo URL: " + imageUrl);
+
+
+        Picasso.with(this).setLoggingEnabled(true);
+        Picasso.with(this)
+                .load(imageUrl)
+                //.resize(200,100)
+                //.centerInside()
+                //.centerCrop()
+                .into(mOrganizationLogo);
 
     }
 
@@ -501,12 +478,21 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             public void onComplete(@NonNull Task<Void> task) {
                                 if(task.isSuccessful()) {
-                                    Intent logInActivityIntent = new Intent(context, LoginActivity.class);
-                                    startActivity(logInActivityIntent);
+                                    getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE)
+                                        .edit()
+                                        .clear()
+                                        .commit();
+                                    Intent organizationActivityIntent = new Intent(context, OrganizationActivity.class);
+                                    startActivity(organizationActivityIntent);
                                 }
                             }
                         });
                 return true;
+            case R.id.action_settings:
+                intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -533,8 +519,13 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         Source source = Source.CACHE;
 
+        DocumentReference orgIdReference = db.collection(Constants.FIRESTORE_ORGANIZATION).document(mOrganizationID);
+        Log.d(TAG,"Org ID reference: "+orgIdReference);
+
         db.collection(Constants.FIRESTORE_EVENT)
                 .whereGreaterThan(Constants.FIRESTORE_EVENT_ENDTIME,Timestamp.now())
+                .whereEqualTo(Constants.FIRESTORE_EVENT_ACTIVE, true)
+                .whereEqualTo(Constants.FIRESTORE_EVENT_ORGID,orgIdReference)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -651,7 +642,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         if(checkLocationPermission()) {
             mCurrentLocation = location != null ? location : mLocationManager.getLastKnownLocation(mLocationManager.getBestProvider(createFineCriteria(), true));
-            Log.v(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
+            if(mCurrentLocation!=null)Log.v(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
         }
 
     }
@@ -744,18 +735,299 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         }
     }
 
-    private static class StringWithTag {
-        public String string;
-        public Object tag;
+    /**
+     * Initialize the {@link Cipher} instance with the created key in the
+     * {@link #createKey(String, boolean)} method.
+     *
+     * @param keyName the key name to init the cipher
+     * @return {@code true} if initialization is successful, {@code false} if the lock screen has
+     * been disabled or reset after the key was generated, or if a fingerprint got enrolled after
+     * the key was generated.
+     */
+    private boolean initCipher(Cipher cipher, String keyName) {
+        try {
+            mKeyStore.load(null);
+            SecretKey key = (SecretKey) mKeyStore.getKey(keyName, null);
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            return true;
+        } catch (KeyPermanentlyInvalidatedException e) {
+            return false;
+        } catch (KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
+                | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException("Failed to init Cipher", e);
+        }
+    }
 
-        public StringWithTag(String string, Object tag) {
-            this.string = string;
-            this.tag = tag;
+    /**
+     * Proceed the check-in operation
+     *
+     * @param withFingerprint {@code true} if the auth was made by using a fingerprint
+     * @param cryptoObject the Crypto object
+     */
+    public void onBioAuthenticated(boolean withFingerprint,
+                            @Nullable FingerprintManager.CryptoObject cryptoObject) {
+        if (withFingerprint) {
+            // If the user has authenticated with fingerprint, verify that using cryptography and
+            // then show the confirmation message.
+            assert cryptoObject != null;
+            tryEncrypt(cryptoObject.getCipher());
+        } else {
+            // Authentication happened with backup password. Just show the confirmation message.
+            logConfirmation(null);
+        }
+
+        //After authentication, start check-in verification (time and location)
+        final Event e = mEvents.get(((StringWithTag) mEventsSpinner.getSelectedItem()).tag);
+
+        if (mDeviceID != null) {
+            try {
+                getCurrentLocation(null);
+                if (mCurrentLocation != null) {
+                    Location eventLocation = new Location(mLocationManager.getBestProvider(createFineCriteria(), true));
+                    eventLocation.setLatitude(e.getLocation().getGeolocation().getLatitude());
+                    eventLocation.setLongitude(e.getLocation().getGeolocation().getLongitude());
+                    Log.d(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
+                    Log.d(TAG, "Event's Location: " + eventLocation.getLatitude() + "," + eventLocation.getLongitude());
+
+
+
+                    if (new Date(Calendar.getInstance().getTimeInMillis() + (Constants.MAX_MINUTES_CHECKIN_BEFOREEVENT * Constants.ONE_MINUTE_IN_MILLIS)).after(e.getStarttime().toDate())
+                            && new Date(Calendar.getInstance().getTimeInMillis()).before(e.getEndtime().toDate())) {
+
+                        if (mCurrentLocation.distanceTo(eventLocation) <= e.getLocation().getRadius()) {
+
+                            Map<String, Object> data = new HashMap<>();
+                            data.put(Constants.FIRESTORE_CHECKIN_CHECKINTIME, Timestamp.now());
+                            data.put(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, null);
+                            data.put(Constants.FIRESTORE_CHECKIN_EVENTID, db.collection(Constants.FIRESTORE_EVENT).document(e.getEventID()));
+                            data.put(Constants.FIRESTORE_CHECKIN_DEVICEID,db.collection(Constants.FIRESTORE_DEVICE).document(mDeviceID));
+
+
+                            db.collection(Constants.FIRESTORE_CHECKIN)
+                                    .add(data)
+                                    .continueWith(new Continuation<DocumentReference, DocumentReference>() {
+                                        @Override
+                                        public DocumentReference then(@NonNull Task<DocumentReference> task) throws Exception {
+
+
+                                            DocumentReference checkin = task.getResult();
+
+                                            mGeofenceList.add(new Geofence.Builder()
+                                                    // Set the request ID of the geofence. This is a string to identify this
+                                                    // geofence.
+                                                    .setRequestId(e.getEventID())
+
+                                                    .setCircularRegion(
+                                                            e.getLocation().getGeolocation().getLatitude(),
+                                                            e.getLocation().getGeolocation().getLongitude(),
+                                                            e.getLocation().getRadius()
+                                                    )
+                                                    .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                                                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
+                                                    .build());
+                                            Log.i(TAG, "Creating GeoFence for: "+e.getLocation().getGeolocation().getLatitude()+","+e.getLocation().getGeolocation().getLongitude()+" - with Radius: "+e.getLocation().getRadius());
+
+                                            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                                if (!checkLocationPermission())
+                                                    return null;
+                                            }
+                                            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent(checkin.getId()));
+                                            Log.i(TAG, "Adding GeoFence");
+
+                                            return checkin;
+                                        }
+                                    })
+                                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                                        @Override
+                                        public void onSuccess(final DocumentReference documentReference) {
+                                            Log.d(TAG, "CheckIn DocumentSnapshot written with ID: " + documentReference.getId());
+
+                                            final SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
+                                            final SharedPreferences.Editor editor = prefs.edit();
+
+
+                                            editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, true);
+                                            editor.putString(Constants.SHARED_PREF_EVENTID,e.getEventID());
+                                            editor.putString(Constants.SHARED_PREF_CHECKINID, documentReference.getId());
+                                            editor.putLong(Constants.SHARED_PREF_EVENTENDTIME, e.getEndtime().getSeconds());
+                                            editor.apply();
+
+                                            Intent checkedInActivityIntent = new Intent(getApplicationContext(), CheckInActivity.class);
+                                            startActivity(checkedInActivityIntent);
+
+
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check In Successful!", Toast.LENGTH_LONG);
+                                            toast.show();
+
+
+
+
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Log.w(TAG, "Error adding CheckIn document", e);
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check In UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
+                                            toast.show();
+                                        }
+                                    });
+
+
+                        } else {
+                            Toast toast = Toast.makeText(getApplicationContext(), "You're out of range! Get closer to the event's location at " + e.getLocation().getDescription() + ".", Toast.LENGTH_LONG);
+                            toast.show();
+                        }
+
+
+
+                    } else {
+                        Toast toast = Toast.makeText(getApplicationContext(), "It's not time yet to check in for " + e.getDescription() + ". Check in is available " + Constants.MAX_MINUTES_CHECKIN_BEFOREEVENT + " minutes before the event.", Toast.LENGTH_LONG);
+                        toast.show();
+                    }
+
+
+
+                }
+
+
+            } catch (Exception ex) {
+                Log.v(TAG, ex.getMessage());
+                ex.printStackTrace();
+            }
+
+
+        }
+
+    }
+
+    // Show confirmation, if fingerprint was used show crypto information.
+    private void logConfirmation(byte[] encrypted) {
+        Log.d(TAG,getResources().getString(R.string.bio_auth_done));
+        if (encrypted != null) {
+            Log.d(TAG,Base64.encodeToString(encrypted, 0 /* flags */));
+        }
+    }
+
+    /**
+     * Tries to encrypt some data with the generated key in {@link #createKey} which is
+     * only works if the user has just authenticated via fingerprint.
+     */
+    private void tryEncrypt(Cipher cipher) {
+        try {
+            byte[] encrypted = cipher.doFinal(SECRET_MESSAGE.getBytes());
+            logConfirmation(encrypted);
+        } catch (BadPaddingException | IllegalBlockSizeException e) {
+            Toast.makeText(this, "Failed to encrypt the data with the generated key. "
+                    + "Retry the check-in", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Failed to encrypt the data with the generated key." + e.getMessage());
+        }
+    }
+
+    /**
+     * Creates a symmetric key in the Android Key Store which can only be used after the user has
+     * authenticated with fingerprint.
+     *
+     * @param keyName the name of the key to be created
+     * @param invalidatedByBiometricEnrollment if {@code false} is passed, the created key will not
+     *                                         be invalidated even if a new fingerprint is enrolled.
+     *                                         The default value is {@code true}, so passing
+     *                                         {@code true} doesn't change the behavior
+     *                                         (the key will be invalidated if a new fingerprint is
+     *                                         enrolled.). Note that this parameter is only valid if
+     *                                         the app works on Android N developer preview.
+     *
+     */
+    public void createKey(String keyName, boolean invalidatedByBiometricEnrollment) {
+        // The enrolling flow for fingerprint. This is where you ask the user to set up fingerprint
+        // for your flow. Use of keys is necessary if you need to know if the set of
+        // enrolled fingerprints has changed.
+        try {
+            mKeyStore.load(null);
+            // Set the alias of the entry in Android KeyStore where the key will appear
+            // and the constrains (purposes) in the constructor of the Builder
+
+            KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(keyName,
+                    KeyProperties.PURPOSE_ENCRYPT |
+                            KeyProperties.PURPOSE_DECRYPT)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    // Require the user to authenticate with a fingerprint to authorize every use
+                    // of the key
+                    .setUserAuthenticationRequired(true)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7);
+
+            // This is a workaround to avoid crashes on devices whose API level is < 24
+            // because KeyGenParameterSpec.Builder#setInvalidatedByBiometricEnrollment is only
+            // visible on API level +24.
+            // Ideally there should be a compat library for KeyGenParameterSpec.Builder but
+            // which isn't available yet.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                builder.setInvalidatedByBiometricEnrollment(invalidatedByBiometricEnrollment);
+            }
+            mKeyGenerator.init(builder.build());
+            mKeyGenerator.generateKey();
+        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException
+                | CertificateException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private class CheckInButtonClickListener implements View.OnClickListener {
+
+        Cipher mCipher;
+        String mKeyName;
+
+        CheckInButtonClickListener(Cipher cipher, String keyName) {
+            mCipher = cipher;
+            mKeyName = keyName;
         }
 
         @Override
-        public String toString() {
-            return string;
+        public void onClick(View view) {
+
+            final Event e = mEvents.get(((StringWithTag) mEventsSpinner.getSelectedItem()).tag);
+            //Check if selected event is valid before proceeding
+            if (e != null) {
+
+
+                // Set up the crypto object for later. The object will be authenticated by use
+                // of the fingerprint.
+                if (initCipher(mCipher, mKeyName)) {
+
+                    // Show the fingerprint dialog. The user has the option to use the fingerprint with
+                    // crypto, or you can fall back to using a server-side verified password.
+                    FingerprintAuthenticationDialogFragment fragment
+                            = new FingerprintAuthenticationDialogFragment();
+                    fragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
+                    boolean useFingerprintPreference = mSharedSettingsPreferences
+                            .getBoolean(getString(R.string.use_fingerprint_to_authenticate_key),
+                                    true);
+                    if (useFingerprintPreference) {
+                        fragment.setStage(
+                                FingerprintAuthenticationDialogFragment.Stage.FINGERPRINT);
+                    } else {
+                        fragment.setStage(
+                                FingerprintAuthenticationDialogFragment.Stage.PASSWORD);
+                    }
+                    fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+                } else {
+                    // This happens if the lock screen has been disabled or or a fingerprint got
+                    // enrolled. Thus show the dialog to authenticate with their password first
+                    // and ask the user if they want to authenticate with fingerprints in the
+                    // future
+                    FingerprintAuthenticationDialogFragment fragment
+                            = new FingerprintAuthenticationDialogFragment();
+                    fragment.setCryptoObject(new FingerprintManager.CryptoObject(mCipher));
+                    fragment.setStage(
+                            FingerprintAuthenticationDialogFragment.Stage.NEW_FINGERPRINT_ENROLLED);
+                    fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+                }
+            }
+            else {
+                Toast toast = Toast.makeText(getApplicationContext(), "No event selected. Please, try again later if there are no events available.", Toast.LENGTH_LONG);
+                toast.show();
+            }
         }
     }
 
