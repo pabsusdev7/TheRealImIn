@@ -81,6 +81,22 @@ public class LoginActivity extends AppCompatActivity {
                 // Successfully signed in
                 final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
+                if(!user.isEmailVerified()){
+                    user.sendEmailVerification()
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        Log.d(TAG, "Email sent.");
+                                    }
+                                }
+                            });
+                    Toast toast = Toast.makeText(getApplicationContext(), "We sent you an email verification. Please, confirm your email address before proceding.", Toast.LENGTH_LONG);
+                    toast.show();
+                    signOut();
+                    return;
+                }
+
                 CollectionReference deviceCollectionRef = db.collection(Constants.FIRESTORE_DEVICE);
 
 

@@ -21,7 +21,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
+import android.os.Parcel;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +35,16 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import static com.firebase.ui.auth.AuthUI.getApplicationContext;
 
 /**
  * A dialog which uses fingerprint APIs to authenticate the user, and falls back to password
@@ -49,6 +61,7 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     private CheckBox mUseFingerprintFutureCheckBox;
     private TextView mPasswordDescriptionTextView;
     private TextView mNewFingerprintEnrolledTextView;
+    private FirebaseAuth mAuth;
 
     private Stage mStage = Stage.FINGERPRINT;
 
@@ -66,6 +79,7 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         // Do not create a new Fragment when the Activity is re-created such as orientation changes.
         setRetainInstance(true);
         setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Material_Light_Dialog);
+        mAuth = FirebaseAuth.getInstance();
     }
 
     @Override
@@ -170,24 +184,41 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
      * let's the activity know about the result.
      */
     private void verifyPassword() {
-        if (!checkPassword(mPassword.getText().toString())) {
-            return;
-        }
-        if (mStage == Stage.NEW_FINGERPRINT_ENROLLED) {
-            SharedPreferences.Editor editor = mSharedPreferences.edit();
-            editor.putBoolean(getString(R.string.use_fingerprint_to_authenticate_key),
-                    mUseFingerprintFutureCheckBox.isChecked());
-            editor.apply();
 
-            if (mUseFingerprintFutureCheckBox.isChecked()) {
-                // Re-create the key so that fingerprints including new ones are validated.
-                mActivity.createKey(CheckInActivity.DEFAULT_KEY_NAME, true);
-                mStage = Stage.FINGERPRINT;
-            }
-        }
-        mPassword.setText("");
-        mActivity.onBioAuthenticated(false /* without Fingerprint */, null);
-        dismiss();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        AuthCredential credential = EmailAuthProvider.getCredential(currentUser.getEmail(),mPassword.getText().toString());
+
+        currentUser.reauthenticate(credential)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()) {
+                            if (mStage == Stage.NEW_FINGERPRINT_ENROLLED) {
+                                SharedPreferences.Editor editor = mSharedPreferences.edit();
+                                editor.putBoolean(getString(R.string.use_fingerprint_to_authenticate_key),
+                                        mUseFingerprintFutureCheckBox.isChecked());
+                                editor.apply();
+
+                                if (mUseFingerprintFutureCheckBox.isChecked()) {
+                                    // Re-create the key so that fingerprints including new ones are validated.
+                                    mActivity.createKey(CheckInActivity.DEFAULT_KEY_NAME, true);
+                                    mStage = Stage.FINGERPRINT;
+                                }
+                            }
+                            mPassword.setText("");
+                            mActivity.onBioAuthenticated(false /* without Fingerprint */, null);
+                            dismiss();
+                        } else {
+                            Toast toast = Toast.makeText(getContext(), "Wrong credentials. Please, try again", Toast.LENGTH_LONG);
+                            toast.show();
+                        }
+
+                    }
+                });
+
+
+
     }
 
     /**
