@@ -1,3 +1,4 @@
 /build
 /app/google-service.json
+/app/android.jks
 /keystore.properties
