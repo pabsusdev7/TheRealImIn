@@ -45,6 +45,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = LoginActivity.class.getSimpleName();
     private FirebaseFirestore db;
     private String mDeviceID;
+    private SharedPreferences mSharedPreferences;
     // Choose authentication providers
     List<AuthUI.IdpConfig> providers = Arrays.asList(
             new AuthUI.IdpConfig.EmailBuilder().build()
@@ -57,6 +58,8 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         db = FirebaseFirestore.getInstance();
+
+        mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
 
         loadDeviceInfo();
 
@@ -91,7 +94,16 @@ public class LoginActivity extends AppCompatActivity {
                                     }
                                 }
                             });
-                    Toast toast = Toast.makeText(getApplicationContext(), "We sent you an email verification. Please, confirm your email address before proceding.", Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(getApplicationContext(), "We sent you an email verification. Please, confirm your email address before proceeding.", Toast.LENGTH_LONG);
+                    toast.show();
+                    signOut();
+                    return;
+                }
+
+                if(mSharedPreferences.contains(Constants.SHARED_PREF_ORGDOMAIN) && !user.getEmail().split("@")[1].equals(mSharedPreferences.getString(Constants.SHARED_PREF_ORGDOMAIN,null)))
+                {
+                    Log.d(TAG,"User's email address domain: "+user.getEmail().split("@")[1]+" - Org Domain: "+mSharedPreferences.getString(Constants.SHARED_PREF_ORGDOMAIN,null));
+                    Toast toast = Toast.makeText(getApplicationContext(), "The email address you registered with ("+ user.getEmail() +") does not match the organization's domain.", Toast.LENGTH_LONG);
                     toast.show();
                     signOut();
                     return;
@@ -162,7 +174,7 @@ public class LoginActivity extends AppCompatActivity {
 
                                         Log.d(TAG, "Error getting Device documents: ", task.getException());
                                         if(task.getException().getMessage().contains(Constants.ERR_PERMISSION_DENIED)) {
-                                            Toast toast = Toast.makeText(getApplicationContext(), "The account you used does not belong to the organization. Please, try again.", Toast.LENGTH_LONG);
+                                            Toast toast = Toast.makeText(getApplicationContext(), "The account you used does not belong to the selected organization. Please, try again.", Toast.LENGTH_LONG);
                                             toast.show();
                                             signOut();
                                         }

@@ -18,6 +18,7 @@ public final class Constants {
     public static final String SHARED_PREF_EVENTID = "eventid";
     public static final String SHARED_PREF_EVENTENDTIME = "eventendtime";
     public static final String SHARED_PREF_ORGID = "orgid";
+    public static final String SHARED_PREF_ORGDOMAIN = "domain";
 
     //FIRESTORE
     public static final String FIRESTORE_CHECKIN = "checkin";

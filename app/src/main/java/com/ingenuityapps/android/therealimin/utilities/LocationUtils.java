@@ -19,9 +19,10 @@ public class LocationUtils {
 
     private static final String TAG = LocationUtils.class.getSimpleName();
 
-    public static void openLocationInMap(Context context, GeoPoint location) {
-        Uri geoLocation = Uri.parse("geo:" + location.getLatitude() + "," + location.getLongitude());
+    public static void openLocationInMap(Context context, GeoPoint location, String label) {
+        //Uri geoLocation = Uri.parse("geo:" + location.getLatitude() + "," + location.getLongitude());geo:0,0?q=-33.8666,151.1957(Google+Sydney)
 
+        Uri geoLocation = Uri.parse("geo:0,0?q="+ location.getLatitude() +","+ location.getLongitude() +"("+ label +")");
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(geoLocation);
 

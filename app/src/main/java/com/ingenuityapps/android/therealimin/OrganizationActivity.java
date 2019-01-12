@@ -88,6 +88,7 @@ public class OrganizationActivity extends AppCompatActivity {
 
 
                     editor.putString(Constants.SHARED_PREF_ORGID,organization.getOrganizationID());
+                    editor.putString(Constants.SHARED_PREF_ORGDOMAIN,organization.getDomain());
                     editor.apply();
                     Log.d(TAG,Constants.SHARED_PREF_ORGID+"="+organization.getOrganizationID());
                     goToLogIn();

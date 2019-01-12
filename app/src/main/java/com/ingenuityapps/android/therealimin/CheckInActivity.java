@@ -434,7 +434,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         mEventLocationDirections.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                LocationUtils.openLocationInMap(getApplicationContext(), event.getLocation().getGeolocation());
+                LocationUtils.openLocationInMap(getApplicationContext(), event.getLocation().getGeolocation(), event.getLocation().getDescription());
             }
         });
         mEventStartTime.setText(timeFormatter.format(event.getStarttime().toDate()));

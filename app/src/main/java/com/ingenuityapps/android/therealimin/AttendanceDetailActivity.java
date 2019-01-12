@@ -51,7 +51,7 @@ public class AttendanceDetailActivity extends AppCompatActivity {
                     mDetailBinding.primaryInfo.locationDescription.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            LocationUtils.openLocationInMap(getApplicationContext(),intentData.getEvent().getLocation().getGeolocation());
+                            LocationUtils.openLocationInMap(getApplicationContext(),intentData.getEvent().getLocation().getGeolocation(), intentData.getEvent().getLocation().getDescription());
                         }
                     });
                     mDetailBinding.primaryInfo.startTime.setText(timeFormatter.format(formatter.parse(intentData.getEvent().getStarttime().toDate().toString())));
