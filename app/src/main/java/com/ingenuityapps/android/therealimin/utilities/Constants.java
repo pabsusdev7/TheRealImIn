@@ -50,4 +50,6 @@ public final class Constants {
 
     //Errors
     public static final String ERR_PERMISSION_DENIED = "PERMISSION_DENIED";
+    public static final String COMPANY_LOGO = "IA-logo";
+    public static final long START_ACTIVITY_TIME_OUT = 4000;
 }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name"> ImIn</string>
+    <string name="app_name">ImIn</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
@@ -54,8 +54,8 @@
     <string name="to_label">To</string>
     <string name="required_label">Required</string>
     <string name="timer_done">Event Concluded!</string>
-    <string name="checkedin_message">You are currently checked into %s. You will be checked out
-        as soon as you leave %s
+    <string name="checkedin_message">You are currently checked in %s. You will be checked out
+        as soon as you leave %s. You may resume other activities but don\'t close ImIn until you are checked out.
     </string>
     <string name="org_logo_url">https://ingenuityapps.com/wp-content/uploads/imin/logos/%s.png</string>
 
@@ -77,4 +77,11 @@
     <string name="description_fingerprint_icon">Fingerprint icon</string>
     <string name="next">Next</string>
     <string name="desc_refresh">Refresh</string>
+    <string name="desc_timer">Timer</string>
+    <string name="title_welcome">Welcome to the ImIn app!</string>
+    <string name="app_slogan">Easy. Secure. Accurate</string>
+    <string name="powered_by">Powered by</string>
+    <string name="company_name">Ingenuity Applications</string>
+    <string name="tosURL">https://ingenuityapps.com/imin-terms-conditions</string>
+    <string name="ppURL">https://ingenuityapps.com/imin-privacy-policy</string>
 </resources>

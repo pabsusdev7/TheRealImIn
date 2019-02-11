@@ -2,8 +2,8 @@
 <resources>
     <color name="colorPrimary">#FF8982</color>
     <color name="colorPrimaryDark">@color/colorPrimary</color>
-    <color name="colorPrimaryLight">#41A4B9</color>
-    <color name="colorAccent">#96CEB4</color>
+    <color name="colorPrimaryLight">#41a4b9</color>
+    <color name="colorAccent">#4cce91</color>
     <color name="background">#C2C2C2</color>
     <color name="checked_in">@color/colorAccent</color>
     <color name="checkedin_status">#cfd1ce</color>
@@ -18,4 +18,5 @@
     <color name="warning_color">#f4511e</color>
     <color name="hint_color">#42000000</color>
     <color name="success_color">#009688</color>
+    <color name="company_color">#30404e</color>
 </resources>

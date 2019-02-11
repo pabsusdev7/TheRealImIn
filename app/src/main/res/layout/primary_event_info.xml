@@ -7,10 +7,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-         - This Guideline divides the screen into a left half and a right half and is used to    -
-         - anchor the views to the middle of the screen.                                         -
-         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
         <android.support.constraint.Guideline
             android:id="@+id/horizontal_middle"
             android:layout_width="wrap_content"
@@ -20,51 +16,39 @@
             tools:layout_editor_absoluteX="192dp"
             tools:layout_editor_absoluteY="0dp"/>
 
-        <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-         - Selected day's date                                                                   -
-         -                                                                                       -
-         - You may notice that the line android:fontFamily="sans-serif" is highlighted in        -
-         - yellow. The reason for the highlighted line is that the fontFamily attribute is not   -
-         - available on versions of Android before 16, and our minimum supported version of      -
-         - Android is 10. This - particular issue won't break the app, but you should note that  -
-         - this attribute will be - ignored on devices that run an Android version less than 16. -
-         - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-
         <TextView
             android:id="@+id/event"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:textSize="22sp"
+            android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@+id/date"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="32dp"
-            android:textSize="20sp"
+            android:textSize="18sp"
             app:layout_constraintBottom_toTopOf="@+id/location_map"
-            app:layout_constraintStart_toStartOf="@id/event"
-            app:layout_constraintEnd_toEndOf="@id/event" />
+            app:layout_constraintEnd_toEndOf="@id/event"
+            app:layout_constraintStart_toStartOf="@id/event" />
 
-        <!-- Icon indicating weather condition -->
         <TextView
             android:id="@+id/location_map"
             android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:textAlignment="center"
-            android:textSize="24sp"
+            android:textSize="22sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/horizontal_middle"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Text that describes weather condition -->
         <TextView
             android:id="@+id/location_description"
             android:layout_width="wrap_content"
@@ -80,16 +64,16 @@
 
         <TextView
             android:id="@+id/start_time"
-            android:layout_width="157dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-light"
             android:textColor="@color/primary_text"
-            android:textSize="64sp"
+            android:textSize="48sp"
             app:layout_constraintBottom_toBottomOf="@+id/location_map"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.45"
             app:layout_constraintStart_toStartOf="@+id/horizontal_middle"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/location_map"/>
+            app:layout_constraintTop_toTopOf="@+id/location_map" />
 
         <TextView
             android:id="@+id/end_time"
@@ -98,9 +82,9 @@
             android:layout_marginTop="76dp"
             android:fontFamily="sans-serif-light"
             android:textColor="@color/secondary_text"
-            android:textSize="36sp"
-            app:layout_constraintStart_toStartOf="@+id/start_time"
+            android:textSize="32sp"
             app:layout_constraintEnd_toEndOf="@+id/start_time"
+            app:layout_constraintStart_toStartOf="@+id/start_time"
             app:layout_constraintTop_toTopOf="@+id/start_time" />
 
         <TextView

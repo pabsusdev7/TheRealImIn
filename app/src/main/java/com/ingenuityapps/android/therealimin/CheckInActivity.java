@@ -191,124 +191,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         loadOrganizationLogo();
 
-
-        if (mSharedPreferences.contains(Constants.SHARED_PREF_CHECKEDIN) && mSharedPreferences.contains(Constants.SHARED_PREF_EVENTID) && mSharedPreferences.contains(Constants.SHARED_PREF_CHECKINID) && mSharedPreferences.contains(Constants.SHARED_PREF_EVENTENDTIME)) {
-            Boolean checkedin = mSharedPreferences.getBoolean(Constants.SHARED_PREF_CHECKEDIN,false);
-            String event_id = mSharedPreferences.getString(Constants.SHARED_PREF_EVENTID, null);
-            final String checkin_id = mSharedPreferences.getString(Constants.SHARED_PREF_CHECKINID, null);
-            Long event_endtime = mSharedPreferences.getLong(Constants.SHARED_PREF_EVENTENDTIME,0);
-            if (checkedin && event_id!=null && checkin_id!=null) {
-
-                Log.d(TAG,"User is currently checked in!");
-
-                final SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss");
-                final Calendar calendar = Calendar.getInstance();
-                final SharedPreferences.Editor editor = mSharedPreferences.edit();
-
-                if(mTimer==null) {
-                    mTimer = new CountDownTimer((event_endtime - Timestamp.now().getSeconds()) * 1000, 1000) {
-
-                        public void onTick(long millisUntilFinished) {
-                            Log.d(TAG, "Seconds remaining: " + millisUntilFinished / 1000);
-
-                            calendar.setTimeInMillis(millisUntilFinished);
-                            calendar.set(Calendar.HOUR_OF_DAY, (int) (millisUntilFinished / 3600000));
-
-                            mEventTimer.setText(timeFormatter.format(calendar.getTime()));
-
-                            if (!mSharedPreferences.getBoolean(Constants.SHARED_PREF_CHECKEDIN, false))
-                                cancel();
-                        }
-
-                        public void onFinish() {
-                            Log.d(TAG, "Done!");
-
-                            mEventTimer.setText(getResources().getString(R.string.timer_done));
-
-                            DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkin_id);
-
-                            checkInRef
-                                    .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, Timestamp.now())
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out Successful!", Toast.LENGTH_LONG);
-                                            toast.show();
-
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
-                                            toast.show();
-                                        }
-                                    });
-
-                            editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
-                            editor.apply();
-
-                            Intent checkInIntent = new Intent(getApplicationContext(), CheckInActivity.class);
-                            startActivity(checkInIntent);
-                        }
-                    };
-
-                    mTimer.start();
-                }
-
-                db.collection(Constants.FIRESTORE_EVENT).document(event_id)
-                        .get()
-                        .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                            @Override
-                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                if (task.isSuccessful()) {
-                                    DocumentSnapshot document = task.getResult();
-                                    if (document.exists()) {
-                                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                                        final Event event = new Event(document.getId(), document.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), document.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), document.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), document.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
-
-                                        document.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID).get()
-                                                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                                                    @Override
-                                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                                                        com.ingenuityapps.android.therealimin.data.Location location = documentSnapshot.toObject(com.ingenuityapps.android.therealimin.data.Location.class);
-                                                        event.setLocation(location);
-
-
-                                                        setUpEventInfoContainer(event, true);
-                                                        mEventInfoContainer.setVisibility(View.VISIBLE);
-                                                        //Hide/Show CheckedIn Controls
-                                                        mCheckedInStatus.setText(String.format(getResources().getString(R.string.checkedin_message),event.getDescription(),event.getLocation().getDescription()));
-                                                        mCheckedInStatus.setVisibility(View.VISIBLE);
-                                                        mEventTimerContainer.setVisibility(View.VISIBLE);
-                                                        mEventsSpinner.setVisibility(View.GONE);
-                                                        mCheckIn.setVisibility(View.GONE);
-                                                        mEventLabel.setVisibility(View.GONE);
-
-
-                                                    }
-                                                });
-                                    } else {
-                                        Log.d(TAG, "No such document");
-                                    }
-                                } else {
-                                    Log.d(TAG, "Get failed with ", task.getException());
-                                }
-                            }
-                        });
-
-
-
-
-
-
-            }
-            else
-                loadEvents();
-        }
-        else
-            loadEvents();
-
         mEventsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id) {
@@ -406,18 +288,136 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         Picasso.with(this).setLoggingEnabled(true);
         Picasso.with(this)
                 .load(imageUrl)
-                //.resize(200,100)
-                //.centerInside()
-                //.centerCrop()
                 .into(mOrganizationLogo);
 
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onResume() {
+        super.onResume();
 
-        if(mTimer!=null)mTimer.cancel();
+        if(mTimer!=null) {
+            mTimer.cancel();
+            mTimer = null;
+        }
+
+        if (mSharedPreferences.contains(Constants.SHARED_PREF_CHECKEDIN) && mSharedPreferences.contains(Constants.SHARED_PREF_EVENTID) && mSharedPreferences.contains(Constants.SHARED_PREF_CHECKINID) && mSharedPreferences.contains(Constants.SHARED_PREF_EVENTENDTIME)) {
+            Boolean checkedin = mSharedPreferences.getBoolean(Constants.SHARED_PREF_CHECKEDIN,false);
+            String event_id = mSharedPreferences.getString(Constants.SHARED_PREF_EVENTID, null);
+            final String checkin_id = mSharedPreferences.getString(Constants.SHARED_PREF_CHECKINID, null);
+            Long event_endtime = mSharedPreferences.getLong(Constants.SHARED_PREF_EVENTENDTIME,0);
+            if (checkedin && event_id!=null && checkin_id!=null) {
+
+                Log.d(TAG,"User is currently checked in!");
+
+                mEventsSpinner.setVisibility(View.GONE);
+                mCheckIn.setVisibility(View.GONE);
+                mEventLabel.setVisibility(View.GONE);
+
+                final SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss");
+                final Calendar calendar = Calendar.getInstance();
+                final SharedPreferences.Editor editor = mSharedPreferences.edit();
+
+                if(mTimer==null) {
+                    mTimer = new CountDownTimer((event_endtime - Timestamp.now().getSeconds()) * 1000, 1000) {
+
+                        public void onTick(long millisUntilFinished) {
+                            Log.d(TAG, "Seconds remaining: " + millisUntilFinished / 1000);
+
+                            calendar.setTimeInMillis(millisUntilFinished);
+                            calendar.set(Calendar.HOUR_OF_DAY, (int) (millisUntilFinished / 3600000));
+
+                            mEventTimer.setText(timeFormatter.format(calendar.getTime()));
+
+                            if (!mSharedPreferences.getBoolean(Constants.SHARED_PREF_CHECKEDIN, false))
+                                cancel();
+                        }
+
+                        public void onFinish() {
+                            Log.d(TAG, "Done!");
+
+                            mEventTimer.setText(getResources().getString(R.string.timer_done));
+
+                            DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkin_id);
+
+                            checkInRef
+                                    .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, Timestamp.now())
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out Successful!", Toast.LENGTH_LONG);
+                                            toast.show();
+
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
+                                            toast.show();
+                                        }
+                                    });
+
+                            editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
+                            editor.apply();
+
+                            Intent checkInIntent = new Intent(getApplicationContext(), CheckInActivity.class);
+                            startActivity(checkInIntent);
+                        }
+                    };
+
+                    mTimer.start();
+                }
+
+                db.collection(Constants.FIRESTORE_EVENT).document(event_id)
+                        .get(Source.CACHE)
+                        .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                            @Override
+                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                if (task.isSuccessful()) {
+                                    DocumentSnapshot document = task.getResult();
+                                    if (document.exists()) {
+                                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                                        final Event event = new Event(document.getId(), document.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), document.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), document.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), document.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
+
+                                        document.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID).get()
+                                                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                                    @Override
+                                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                                        com.ingenuityapps.android.therealimin.data.Location location = documentSnapshot.toObject(com.ingenuityapps.android.therealimin.data.Location.class);
+                                                        event.setLocation(location);
+
+
+                                                        setUpEventInfoContainer(event, true);
+                                                        mEventInfoContainer.setVisibility(View.VISIBLE);
+                                                        //Hide/Show CheckedIn Controls
+                                                        mCheckedInStatus.setText(String.format(getResources().getString(R.string.checkedin_message),event.getDescription(),event.getLocation().getDescription()));
+                                                        mCheckedInStatus.setVisibility(View.VISIBLE);
+                                                        mEventTimerContainer.setVisibility(View.VISIBLE);
+
+
+                                                    }
+                                                });
+                                    } else {
+                                        Log.d(TAG, "No such document");
+                                    }
+                                } else {
+                                    Log.d(TAG, "Get failed with ", task.getException());
+                                }
+                            }
+                        });
+
+
+
+
+
+
+            }
+            else
+                loadEvents();
+        }
+        else
+            loadEvents();
     }
 
     private void setUpEventInfoContainer(final Event event, boolean showTitle) {

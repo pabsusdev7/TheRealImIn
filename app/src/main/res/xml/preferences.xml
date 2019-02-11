@@ -19,5 +19,6 @@
         android:key="@string/use_fingerprint_to_authenticate_key"
         android:title="@string/use_fingerprint_to_authenticate_title"
         android:persistent="true"
+        android:enabled="false"
         android:defaultValue="true" />
 </PreferenceScreen>

@@ -25,30 +25,34 @@
             android:id="@+id/checkin_label"
             style="@style/DetailLabel"
             android:text="@string/checkin_label"
+            android:textSize="20sp"
             app:layout_constraintBottom_toTopOf="@+id/checkout_label"
             app:layout_constraintStart_toStartOf="@+id/extra_details"
             app:layout_constraintTop_toTopOf="@+id/extra_details"
-            app:layout_constraintVertical_bias="0.33"/>
+            app:layout_constraintVertical_bias="0.33" />
 
         <TextView
             android:id="@+id/checkin"
             style="@style/ExtraAttendance"
+            android:textSize="22sp"
             app:layout_constraintBottom_toBottomOf="@+id/checkin_label"
-            app:layout_constraintStart_toStartOf="@+id/horizontal_middle"/>
+            app:layout_constraintStart_toStartOf="@+id/horizontal_middle" />
 
         <TextView
             android:id="@+id/checkout_label"
             style="@style/DetailLabel"
             android:text="@string/checkout_label"
+            android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="@+id/extra_details"
             app:layout_constraintStart_toStartOf="@+id/extra_details"
-            app:layout_constraintTop_toTopOf="@+id/extra_details"/>
+            app:layout_constraintTop_toTopOf="@+id/extra_details" />
 
         <TextView
             android:id="@+id/checkout"
             style="@style/ExtraAttendance"
+            android:textSize="22sp"
             app:layout_constraintBottom_toBottomOf="@+id/checkout_label"
-            app:layout_constraintStart_toStartOf="@+id/horizontal_middle"/>
+            app:layout_constraintStart_toStartOf="@+id/horizontal_middle" />
 
     </android.support.constraint.ConstraintLayout>
 </layout>

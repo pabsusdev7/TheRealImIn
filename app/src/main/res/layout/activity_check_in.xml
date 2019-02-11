@@ -36,13 +36,15 @@
                 android:layout_height="100dp"
                 android:layout_marginTop="16dp"
                 android:adjustViewBounds="true"
-                android:contentDescription="@string/desc_school_logo" />
+                android:contentDescription="@string/desc_school_logo"
+                android:scaleType="centerInside" />
 
             <TextView
                 android:id="@+id/tv_event_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:gravity="center"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginEnd="8dp"
@@ -58,7 +60,8 @@
                 android:layout_gravity="center"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="16dp"
-                android:layout_marginEnd="8dp" />
+                android:layout_marginEnd="8dp"
+                android:spinnerMode="dialog" />
 
             <LinearLayout
                 android:id="@+id/timer_container"
@@ -68,14 +71,32 @@
                 android:orientation="vertical"
                 android:visibility="gone">
 
-                <TextView
-                    android:id="@+id/tv_timer_title"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="@string/timer_title"
-                    android:textColor="@color/red"
-                    android:textSize="12sp" />
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="end"
+                        android:layout_weight="1"
+                        android:adjustViewBounds="false"
+                        android:contentDescription="@string/desc_timer"
+                        android:cropToPadding="true"
+                        android:scaleType="fitEnd"
+                        android:src="@drawable/ic_timer" />
+
+                    <TextView
+                        android:id="@+id/tv_timer_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="start|center_vertical"
+                        android:text="@string/timer_title"
+                        android:textColor="@color/red"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tv_timer"
