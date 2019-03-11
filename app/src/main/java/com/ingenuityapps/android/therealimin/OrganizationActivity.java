@@ -1,10 +1,17 @@
 package com.ingenuityapps.android.therealimin;
 
+import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -45,6 +52,7 @@ public class OrganizationActivity extends AppCompatActivity {
     private ArrayAdapter<StringWithTag> mOrganizationsAdapter;
     private Map<String, Organization> mOrganizations;
     private SharedPreferences mSharedPreferences;
+    private String mDeviceID;
 
     @BindView(R.id.org_spinner)
     Spinner mOrgSpinner;
@@ -64,11 +72,13 @@ public class OrganizationActivity extends AppCompatActivity {
         mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
         String orgId = mSharedPreferences.getString(Constants.SHARED_PREF_ORGID,null);
 
+        loadDeviceInfo();
+
         if(mSharedPreferences.contains(Constants.SHARED_PREF_ORGID) && orgId!=null){
-            Log.d(TAG,Constants.SHARED_PREF_ORGID+"="+orgId);
             goToLogIn();
             return;
         }
+
 
         setContentView(R.layout.activity_organization);
         ButterKnife.bind(this);
@@ -90,7 +100,6 @@ public class OrganizationActivity extends AppCompatActivity {
                     editor.putString(Constants.SHARED_PREF_ORGID,organization.getOrganizationID());
                     editor.putString(Constants.SHARED_PREF_ORGDOMAIN,organization.getDomain());
                     editor.apply();
-                    Log.d(TAG,Constants.SHARED_PREF_ORGID+"="+organization.getOrganizationID());
                     goToLogIn();
 
                 } else {
@@ -123,7 +132,6 @@ public class OrganizationActivity extends AppCompatActivity {
                             final List<StringWithTag> orgs = new ArrayList<>();
                             orgs.add(new StringWithTag("Select Your Organization", 0));
                             for (QueryDocumentSnapshot document : task.getResult()) {
-                                Log.d(TAG, document.getId() + " => " + document.getData());
 
                                 Organization organization = new Organization(document.getId(), document.getString(Constants.FIRESTORE_ORGANIZATION_DESCRIPTION), document.getString(Constants.FIRESTORE_ORGANIZATION_DOMAIN), document.getBoolean(Constants.FIRESTORE_ORGANIZATION_ACTIVE));
                                 //Organization organization = document.toObject(Organization.class);
@@ -131,7 +139,6 @@ public class OrganizationActivity extends AppCompatActivity {
 
                                 orgs.add(new StringWithTag(organization.getDescription(), organization.getOrganizationID()));
                                 mOrganizations.put(organization.getOrganizationID(), organization);
-                                Log.v(TAG, "Organization: " + organization.getDescription() + ", is available for selection.");
 
 
 
@@ -157,6 +164,89 @@ public class OrganizationActivity extends AppCompatActivity {
                 });
 
 
+    }
+
+    private void loadDeviceInfo() {
+
+        TelephonyManager telephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            mDeviceID = !checkDeviceInfoPermission() ? null : telephonyManager.getDeviceId();
+        }
+        else {
+
+            mDeviceID = telephonyManager.getDeviceId();
+
+        }
+
+
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(Constants.SHARED_PREF_DEVICEID, mDeviceID);
+        editor.apply();
+
+
+    }
+
+    private boolean checkDeviceInfoPermission() {
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.READ_PHONE_STATE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_PHONE_STATE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.title_device_permission)
+                        .setMessage(R.string.text_device_permission)
+                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //Prompt the user once explanation has been shown
+                                ActivityCompat.requestPermissions(OrganizationActivity.this,
+                                        new String[]{Manifest.permission.READ_PHONE_STATE},
+                                        Constants.PERMISSIONS_REQUEST_PHONE_STATE);
+                            }
+                        })
+                        .create()
+                        .show();
+
+
+            } else {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_PHONE_STATE},
+                        Constants.PERMISSIONS_REQUEST_PHONE_STATE);
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case Constants.PERMISSIONS_REQUEST_PHONE_STATE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    loadDeviceInfo();
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                }
+                return;
+            }
+        }
     }
 
     private void showNoResultsMessage() {

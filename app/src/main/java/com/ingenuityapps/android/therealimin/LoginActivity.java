@@ -61,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
 
         mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
 
-        loadDeviceInfo();
+        mDeviceID = mSharedPreferences.getString(Constants.SHARED_PREF_DEVICEID,null);
 
         // Create and launch sign-in intent
         startActivityForResult(
@@ -103,7 +103,6 @@ public class LoginActivity extends AppCompatActivity {
 
                 if(mSharedPreferences.contains(Constants.SHARED_PREF_ORGDOMAIN) && !user.getEmail().split("@")[1].equals(mSharedPreferences.getString(Constants.SHARED_PREF_ORGDOMAIN,null)))
                 {
-                    Log.d(TAG,"User's email address domain: "+user.getEmail().split("@")[1]+" - Org Domain: "+mSharedPreferences.getString(Constants.SHARED_PREF_ORGDOMAIN,null));
                     Toast toast = Toast.makeText(getApplicationContext(), "The email address you registered with ("+ user.getEmail() +") does not match the organization's domain.", Toast.LENGTH_LONG);
                     toast.show();
                     signOut();
@@ -126,17 +125,17 @@ public class LoginActivity extends AppCompatActivity {
                                         if(!task.getResult().isEmpty())
                                         {
                                             for (QueryDocumentSnapshot document : task.getResult()) {
-                                                Log.d(TAG, document.getId() + " => " + document.getData());
+
                                                 if(!document.get(Constants.FIRESTORE_DEVICE_ATTENDEEID).equals(user.getUid())){
                                                     Log.w(TAG,"Somebody's got other's phone! Firebase User ID ("+user.getUid()+") does not match Device's registered User ID ("+document.get("attendeeid")+")");
-                                                    Toast toast = Toast.makeText(getApplicationContext(), "This device is not registered for your account. Please, try again or use a different account.", Toast.LENGTH_LONG);
+                                                    Toast toast = Toast.makeText(getApplicationContext(), "This device is already registered for another account. Please, try again with a different account.", Toast.LENGTH_LONG);
                                                     toast.show();
                                                     user.delete();
                                                     signOut();
                                                     return;
                                                 }
-                                                SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).edit();
-                                                editor.putString("deviceid", document.getId());
+                                                SharedPreferences.Editor editor = mSharedPreferences.edit();
+                                                editor.putString(Constants.SHARED_PREF_DEVICEID, document.getId());
                                                 editor.apply();
 
                                             }
@@ -154,7 +153,7 @@ public class LoginActivity extends AppCompatActivity {
                                                         public void onSuccess(DocumentReference documentReference) {
                                                             Toast toast = Toast.makeText(getApplicationContext(), "This device has been registered to your account!", Toast.LENGTH_LONG);
                                                             toast.show();
-                                                            SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).edit();
+                                                            SharedPreferences.Editor editor = mSharedPreferences.edit();
                                                             editor.putString(Constants.SHARED_PREF_DEVICEID, documentReference.getId());
                                                             editor.apply();
 
@@ -163,7 +162,7 @@ public class LoginActivity extends AppCompatActivity {
                                                     .addOnFailureListener(new OnFailureListener() {
                                                         @Override
                                                         public void onFailure(@NonNull Exception e) {
-                                                            Log.e(TAG,"There was an issue registering this device to account");
+                                                            Log.e(TAG,"There was an issue registering this device to the account");
                                                         }
                                                     });
                                         }
@@ -192,85 +191,6 @@ public class LoginActivity extends AppCompatActivity {
             } else {
                 if(response==null)
                     restartActivity();
-            }
-        }
-    }
-
-    private void loadDeviceInfo() {
-
-        TelephonyManager telephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            mDeviceID = !checkDeviceInfoPermission() ? null : telephonyManager.getDeviceId();
-        }
-        else {
-
-            mDeviceID = telephonyManager.getDeviceId();
-
-            Log.d(TAG,"Device's ID = " + mDeviceID);
-        }
-
-
-    }
-
-    private boolean checkDeviceInfoPermission() {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.READ_PHONE_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.READ_PHONE_STATE)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                new AlertDialog.Builder(this)
-                        .setTitle(R.string.title_device_permission)
-                        .setMessage(R.string.text_device_permission)
-                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                //Prompt the user once explanation has been shown
-                                ActivityCompat.requestPermissions(LoginActivity.this,
-                                        new String[]{Manifest.permission.READ_PHONE_STATE},
-                                        Constants.PERMISSIONS_REQUEST_PHONE_STATE);
-                            }
-                        })
-                        .create()
-                        .show();
-
-
-            } else {
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_PHONE_STATE},
-                        Constants.PERMISSIONS_REQUEST_PHONE_STATE);
-            }
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case Constants.PERMISSIONS_REQUEST_PHONE_STATE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    loadDeviceInfo();
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-
-                }
-                return;
             }
         }
     }

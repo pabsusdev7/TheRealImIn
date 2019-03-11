@@ -104,7 +104,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
         showAttendanceDataView();
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         mUserCheckIns = new ArrayList<>();
 
@@ -118,11 +118,11 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
                             int deviceCounter=0;
                             final int deviceCount = task.getResult().size();
-                            Log.d(TAG, "# of Devices per user:"+deviceCount);
+
                             for(QueryDocumentSnapshot document : task.getResult()){
 
                                 final int deviceCounterAux = ++deviceCounter;
-                                Log.d(TAG, "Counter(position A):"+deviceCounterAux);
+
                                 db.collection(Constants.FIRESTORE_CHECKIN)
                                         .whereEqualTo(Constants.FIRESTORE_CHECKIN_DEVICEID, db.collection(Constants.FIRESTORE_DEVICE).document(document.getId()))
                                         .get()
@@ -133,7 +133,6 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                                                     int checkInCounter = 0;
                                                     final int checkInCount = task.getResult().size();
                                                     for (QueryDocumentSnapshot document : task.getResult()) {
-                                                        Log.d(TAG, document.getId() + " => " + document.getData());
 
                                                         final CheckIn checkIn = new CheckIn();
 
@@ -154,17 +153,30 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                                                         db.collection(Constants.FIRESTORE_EVENT).document(checkIn.getEvent().getEventID()).get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                                             @Override
                                                             public void onSuccess(DocumentSnapshot documentSnapshot) {
-                                                                Log.d(TAG, documentSnapshot.getId() + " => " + documentSnapshot.getData());
 
                                                                 final Event event = new Event(documentSnapshot.getId(), documentSnapshot.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), documentSnapshot.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), documentSnapshot.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), documentSnapshot.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
 
+                                                                if(!event.getRequired()){
+                                                                    documentSnapshot.getReference()
+                                                                            .collection(Constants.FIRESTORE_EVENT_REQUIREDATTENDEE)
+                                                                            .document(user.getEmail())
+                                                                            .get()
+                                                                            .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                                                @Override
+                                                                                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                                                    if(task.isSuccessful())
+                                                                                    {
+                                                                                        event.setRequired(task.getResult().exists());
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                }
                                                                 DocumentReference locationRef = documentSnapshot.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID);
 
                                                                 locationRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                                                                     @Override
                                                                     public void onSuccess(DocumentSnapshot documentSnapshot) {
 
-                                                                        Log.d(TAG, documentSnapshot.getId() + " => " + documentSnapshot.getData());
 
                                                                         Location location = documentSnapshot.toObject(Location.class);
 
@@ -176,11 +188,8 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
                                                                 checkIn.setEvent(event);
 
-                                                                Log.d(TAG, "Counter(position B):"+deviceCounterAux);
-                                                                Log.d(TAG, "Current checkin("+checkIn.getEvent().getDescription()+") position in list: "+mUserCheckIns.lastIndexOf(checkIn));
                                                                 //Making sure we reach the end of the list before setting the attendance recyclerview adapter
                                                                 if (deviceCounterAux == deviceCount && checkInCounterAux == checkInCount) {
-                                                                    Log.d(TAG, "Setting up Attendance Adapter - CheckIn(0): " + mUserCheckIns.get(0).getCheckInTime().toDate() + " - Event: " + mUserCheckIns.get(0).getEvent().getDescription() + " - " + (mUserCheckIns.get(0).getEvent().getStarttime() != null ? mUserCheckIns.get(0).getEvent().getStarttime() : ""));
                                                                     mAttendanceAdapter.setmAttendanceData(mUserCheckIns);
 
                                                                     if(!mUserCheckIns.isEmpty()){
@@ -199,10 +208,8 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
                                                     }
 
-
-
-
-
+                                                    if(checkInCount == 0)
+                                                        showNoResultsMessage();
 
                                                 } else {
                                                     showErrorMessage();

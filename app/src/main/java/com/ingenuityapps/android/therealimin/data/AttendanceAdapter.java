@@ -2,6 +2,7 @@ package com.ingenuityapps.android.therealimin.data;
 
 import android.content.Context;
 import android.media.Image;
+import android.os.Build;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,9 +13,11 @@ import android.widget.TextView;
 
 import com.ingenuityapps.android.therealimin.CheckInActivity;
 import com.ingenuityapps.android.therealimin.R;
+import com.ingenuityapps.android.therealimin.utilities.CheckInByCheckTime;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
@@ -109,6 +112,9 @@ public class AttendanceAdapter extends RecyclerView.Adapter<AttendanceAdapter.At
 
     public void setmAttendanceData(List<CheckIn> attendanceData)
     {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Collections.sort(attendanceData,new CheckInByCheckTime().reversed());
+        }
         mAttendanceData = attendanceData;
         notifyDataSetChanged();
     }

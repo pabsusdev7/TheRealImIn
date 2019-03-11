@@ -16,6 +16,7 @@ public final class Constants {
     public static final String SHARED_PREF_CHECKEDIN = "checkedin";
     public static final String SHARED_PREF_CHECKINID = "checkinid";
     public static final String SHARED_PREF_EVENTID = "eventid";
+    public static final String SHARED_PREF_EVENTDESCRIPTION = "eventdescription";
     public static final String SHARED_PREF_EVENTENDTIME = "eventendtime";
     public static final String SHARED_PREF_ORGID = "orgid";
     public static final String SHARED_PREF_ORGDOMAIN = "domain";
@@ -34,6 +35,7 @@ public final class Constants {
     public static final String FIRESTORE_EVENT_STARTTIME = "starttime";
     public static final String FIRESTORE_EVENT_ENDTIME = "endtime";
     public static final String FIRESTORE_EVENT_REQUIRED = "required";
+    public static final String FIRESTORE_EVENT_REQUIREDATTENDEE = "requiredattendee";
     public static final String FIRESTORE_EVENT_LOCATIONID = "locationid";
     public static final String FIRESTORE_EVENT_ACTIVE = "active";
     public static final String FIRESTORE_EVENT_ORGID = "orgid";
@@ -51,5 +53,5 @@ public final class Constants {
     //Errors
     public static final String ERR_PERMISSION_DENIED = "PERMISSION_DENIED";
     public static final String COMPANY_LOGO = "IA-logo";
-    public static final long START_ACTIVITY_TIME_OUT = 4000;
+    public static final long START_ACTIVITY_TIME_OUT = 6000;
 }

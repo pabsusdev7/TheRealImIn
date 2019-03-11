@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import com.google.firebase.Timestamp;
 
+import java.util.Comparator;
 import java.util.Date;
 
 public class CheckIn implements Parcelable {

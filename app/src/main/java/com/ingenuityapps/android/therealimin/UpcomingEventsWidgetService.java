@@ -87,7 +87,7 @@ class UpcomingEventsRemoteViewsFactory implements RemoteViewsService.RemoteViews
             Event event = new Event(document.getId(), document.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), document.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), document.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), document.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
             events.add(event);
         }
-        Log.d(TAG, "Widget Upcoming Events: " + events.toString());
+
         return events;
 
 

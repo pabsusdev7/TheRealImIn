@@ -46,7 +46,7 @@ public class StartActivity extends AppCompatActivity {
                 startActivity(organizationActivityIntent);
                 finish();
             }
-        },Constants.START_ACTIVITY_TIME_OUT*2);
+        },Constants.START_ACTIVITY_TIME_OUT);
     }
 
     private void loadLogos() {
@@ -70,7 +70,7 @@ public class StartActivity extends AppCompatActivity {
             }
         };
 
-        companyLogo.postDelayed(r, Constants.START_ACTIVITY_TIME_OUT);
+        companyLogo.postDelayed(r, Constants.START_ACTIVITY_TIME_OUT / 3);
 
 
     }

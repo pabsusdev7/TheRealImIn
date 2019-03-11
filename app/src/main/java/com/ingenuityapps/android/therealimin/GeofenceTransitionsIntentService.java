@@ -12,12 +12,15 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
+import com.ingenuityapps.android.therealimin.utilities.NotificationUtils;
 
 import java.util.List;
 
@@ -47,8 +50,6 @@ public class GeofenceTransitionsIntentService extends IntentService {
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         mGeofencingClient  = LocationServices.getGeofencingClient(this);
         if (geofencingEvent.hasError()) {
-            /*String errorMessage = GeofenceErrorMessages.getErrorString(this,
-                    geofencingEvent.getErrorCode());*/
             Log.e(TAG, "Error with geofencing event: " + geofencingEvent.getErrorCode());
             return;
         }
@@ -60,7 +61,6 @@ public class GeofenceTransitionsIntentService extends IntentService {
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
 
 
-            Log.v(TAG, "GeoFence Transition: " + geofenceTransition + ", Triggering Location:" + geofencingEvent.getTriggeringLocation().toString()+", Triggering Geofence: "+geofencingEvent.getTriggeringGeofences().get(0).toString());
             // Get the geofences that were triggered. A single event can trigger
             // multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
@@ -73,34 +73,39 @@ public class GeofenceTransitionsIntentService extends IntentService {
                     try {
 
                         DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkInID);
+                        final Timestamp checkOutTime = Timestamp.now();
 
                         checkInRef
-                                .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME,Timestamp.now())
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME,checkOutTime)
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
                                     @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Toast toast = Toast.makeText(getApplicationContext(), "Check Out Successful!", Toast.LENGTH_LONG);
-                                        toast.show();
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if(task.isSuccessful()){
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out Successful!", Toast.LENGTH_LONG);
+                                            toast.show();
 
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Toast toast = Toast.makeText(getApplicationContext(), "Check Out UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
-                                        toast.show();
+                                            mGeofencingClient.removeGeofences(PendingIntent.getService(getApplicationContext(), 0, intent, PendingIntent.
+                                                    FLAG_UPDATE_CURRENT));
+
+                                            SharedPreferences sharedPreferences = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
+                                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                                            editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
+                                            editor.apply();
+
+                                            NotificationUtils.remindUserAutoCheckOut(getApplicationContext(), sharedPreferences.getString(Constants.SHARED_PREF_EVENTDESCRIPTION,null), checkOutTime);
+
+                                        }else{
+                                            Toast toast = Toast.makeText(getApplicationContext(), "Check Out UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
+                                            toast.show();
+                                        }
+
                                     }
                                 });
-                        mGeofencingClient.removeGeofences(PendingIntent.getService(this, 0, intent, PendingIntent.
-                                FLAG_UPDATE_CURRENT));
 
-                        Log.i(TAG, "Removing GeoFence for CheckIn: "+checkInID);
-                        SharedPreferences.Editor editor = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE).edit();
-                        editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
-                        editor.apply();
 
-                        Intent checkInIntent = new Intent(this, CheckInActivity.class);
-                        startActivity(checkInIntent);
+
+
+
 
 
                     }

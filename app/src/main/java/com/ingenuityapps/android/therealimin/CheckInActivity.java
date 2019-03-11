@@ -55,12 +55,16 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.ingenuityapps.android.therealimin.data.CheckIn;
 import com.ingenuityapps.android.therealimin.data.Event;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
 import com.ingenuityapps.android.therealimin.utilities.LocationUtils;
@@ -113,6 +117,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     private GeofencingClient mGeofencingClient;
     private PendingIntent mGeofencePendingIntent;
     private CountDownTimer mTimer;
+    private FirebaseUser mUser;
 
     @BindView(R.id.tv_empty_message_display)
     TextView mEmptyMessage;
@@ -138,6 +143,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     TextView mEventDescription;
     @BindView(R.id.tv_event_label)
     TextView mEventLabel;
+    @BindView(R.id.tv_greeting)
+    TextView mGreeting;
     @BindView(R.id.location_map)
     TextView mEventLocation;
     @BindView(R.id.location_description)
@@ -173,6 +180,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         ButterKnife.bind(this);
 
         db = FirebaseFirestore.getInstance();
+        mUser = FirebaseAuth.getInstance().getCurrentUser();
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(true);
@@ -188,6 +196,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
         mDeviceID = mSharedPreferences.getString(Constants.SHARED_PREF_DEVICEID,null);
         mOrganizationID = mSharedPreferences.getString(Constants.SHARED_PREF_ORGID,null);
+
+        mGreeting.setText(String.format(getString(R.string.label_greeting),mUser.getDisplayName().split("\\s")[0]));
 
         loadOrganizationLogo();
 
@@ -282,8 +292,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     private void loadOrganizationLogo() {
 
         String imageUrl = String.format(getResources().getString(R.string.org_logo_url),mOrganizationID!=null ? mOrganizationID : "default");
-        Log.d(TAG,"Logo URL: " + imageUrl);
-
 
         Picasso.with(this).setLoggingEnabled(true);
         Picasso.with(this)
@@ -313,6 +321,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                 mEventsSpinner.setVisibility(View.GONE);
                 mCheckIn.setVisibility(View.GONE);
                 mEventLabel.setVisibility(View.GONE);
+                mGreeting.setVisibility(View.GONE);
 
                 final SimpleDateFormat timeFormatter = new SimpleDateFormat("HH:mm:ss");
                 final Calendar calendar = Calendar.getInstance();
@@ -334,7 +343,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                         }
 
                         public void onFinish() {
-                            Log.d(TAG, "Done!");
 
                             mEventTimer.setText(getResources().getString(R.string.timer_done));
 
@@ -377,7 +385,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                 if (task.isSuccessful()) {
                                     DocumentSnapshot document = task.getResult();
                                     if (document.exists()) {
-                                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+
                                         final Event event = new Event(document.getId(), document.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), document.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), document.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), document.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
 
                                         document.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID).get()
@@ -517,10 +525,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
     private void loadEvents() {
 
-        Source source = Source.CACHE;
-
         DocumentReference orgIdReference = db.collection(Constants.FIRESTORE_ORGANIZATION).document(mOrganizationID);
-        Log.d(TAG,"Org ID reference: "+orgIdReference);
 
         db.collection(Constants.FIRESTORE_EVENT)
                 .whereGreaterThan(Constants.FIRESTORE_EVENT_ENDTIME,Timestamp.now())
@@ -534,9 +539,24 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                             final List<StringWithTag> events = new ArrayList<StringWithTag>();
                             events.add(new StringWithTag("Select One", 0));
                             for (QueryDocumentSnapshot document : task.getResult()) {
-                                Log.d(TAG, document.getId() + " => " + document.getData());
 
                                 final Event event = new Event(document.getId(), document.get(Constants.FIRESTORE_EVENT_DESCRIPTION).toString(), document.getTimestamp(Constants.FIRESTORE_EVENT_STARTTIME), document.getTimestamp(Constants.FIRESTORE_EVENT_ENDTIME), document.getBoolean(Constants.FIRESTORE_EVENT_REQUIRED));
+
+                                if(!event.getRequired()){
+                                    document.getReference()
+                                            .collection(Constants.FIRESTORE_EVENT_REQUIREDATTENDEE)
+                                            .document(mUser.getEmail())
+                                            .get()
+                                            .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                    if(task.isSuccessful())
+                                                    {
+                                                        event.setRequired(task.getResult().exists());
+                                                    }
+                                                }
+                                            });
+                                }
 
                                 DocumentReference locationRef = document.getDocumentReference(Constants.FIRESTORE_EVENT_LOCATIONID);
 
@@ -548,7 +568,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
                                         events.add(new StringWithTag(event.getDescription(), event.getEventID()));
                                         mEvents.put(event.getEventID(), event);
-                                        Log.v(TAG, "Event " + event.getDescription() + " is available for check in.");
 
 
                                     }
@@ -597,11 +616,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_EXIT);
         builder.addGeofences(mGeofenceList);
-        Log.i(TAG, "Current GeoFence List:");
-        for(Geofence geofence: mGeofenceList)
-        {
-            Log.i(TAG, geofence.toString());
-        }
+
         return builder.build();
     }
 
@@ -642,7 +657,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         if(checkLocationPermission()) {
             mCurrentLocation = location != null ? location : mLocationManager.getLastKnownLocation(mLocationManager.getBestProvider(createFineCriteria(), true));
-            if(mCurrentLocation!=null)Log.v(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
+            //if(mCurrentLocation!=null)Log.v(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
         }
 
     }
@@ -786,8 +801,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                     Location eventLocation = new Location(mLocationManager.getBestProvider(createFineCriteria(), true));
                     eventLocation.setLatitude(e.getLocation().getGeolocation().getLatitude());
                     eventLocation.setLongitude(e.getLocation().getGeolocation().getLongitude());
-                    Log.d(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
-                    Log.d(TAG, "Event's Location: " + eventLocation.getLatitude() + "," + eventLocation.getLongitude());
+                    //Log.d(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
+                    //Log.d(TAG, "Event's Location: " + eventLocation.getLatitude() + "," + eventLocation.getLongitude());
 
 
 
@@ -796,7 +811,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
                         if (mCurrentLocation.distanceTo(eventLocation) <= e.getLocation().getRadius()) {
 
-                            Map<String, Object> data = new HashMap<>();
+                            final Map<String, Object> data = new HashMap<>();
                             data.put(Constants.FIRESTORE_CHECKIN_CHECKINTIME, Timestamp.now());
                             data.put(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, null);
                             data.put(Constants.FIRESTORE_CHECKIN_EVENTID, db.collection(Constants.FIRESTORE_EVENT).document(e.getEventID()));
@@ -822,17 +837,15 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                                             e.getLocation().getGeolocation().getLongitude(),
                                                             e.getLocation().getRadius()
                                                     )
-                                                    .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                                                    .setExpirationDuration(e.getEndtime().toDate().getTime()-Calendar.getInstance().getTimeInMillis())
                                                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
                                                     .build());
-                                            Log.i(TAG, "Creating GeoFence for: "+e.getLocation().getGeolocation().getLatitude()+","+e.getLocation().getGeolocation().getLongitude()+" - with Radius: "+e.getLocation().getRadius());
 
                                             if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                                                 if (!checkLocationPermission())
                                                     return null;
                                             }
                                             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent(checkin.getId()));
-                                            Log.i(TAG, "Adding GeoFence");
 
                                             return checkin;
                                         }
@@ -840,7 +853,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                     .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                                         @Override
                                         public void onSuccess(final DocumentReference documentReference) {
-                                            Log.d(TAG, "CheckIn DocumentSnapshot written with ID: " + documentReference.getId());
 
                                             final SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
                                             final SharedPreferences.Editor editor = prefs.edit();
@@ -848,6 +860,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
                                             editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, true);
                                             editor.putString(Constants.SHARED_PREF_EVENTID,e.getEventID());
+                                            editor.putString(Constants.SHARED_PREF_EVENTDESCRIPTION,e.getDescription());
                                             editor.putString(Constants.SHARED_PREF_CHECKINID, documentReference.getId());
                                             editor.putLong(Constants.SHARED_PREF_EVENTENDTIME, e.getEndtime().getSeconds());
                                             editor.apply();

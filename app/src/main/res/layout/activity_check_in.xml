@@ -40,7 +40,7 @@
                 android:scaleType="centerInside" />
 
             <TextView
-                android:id="@+id/tv_event_label"
+                android:id="@+id/tv_greeting"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -48,9 +48,22 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginEnd="8dp"
+                android:text="@string/label_greeting"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tv_event_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:gravity="center"
                 android:text="@string/label_event"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                android:textSize="18sp"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
             <Spinner
@@ -134,7 +147,7 @@
                 android:layout_height="60dp"
                 android:layout_gravity="center"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="16dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="24dp"
                 android:background="@color/colorAccent"

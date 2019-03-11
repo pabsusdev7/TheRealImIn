@@ -59,7 +59,6 @@ public class AttendanceDetailActivity extends AppCompatActivity {
                     mDetailBinding.primaryInfo.tvRequired.setVisibility(intentData.getEvent().getRequired()?View.VISIBLE:View.INVISIBLE);
 
                     mDetailBinding.extraDetails.checkin.setText(checkInTimeFormatter.format(formatter.parse(intentData.getCheckInTime().toDate().toString())));
-                    Log.d(TAG,intentData.getCheckOutTime().toDate().toString());
                     mDetailBinding.extraDetails.checkout.setText((intentData.getCheckOutTime().toDate().getTime() > 0) ? checkInTimeFormatter.format(formatter.parse(intentData.getCheckOutTime().toDate().toString())) : getResources().getString(R.string.no_data));
 
                 }catch (Exception ex)
