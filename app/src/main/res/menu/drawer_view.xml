@@ -19,6 +19,10 @@
             android:title="@string/action_settings"
             app:showAsAction="never" />
         <item
+            android:id="@+id/nav_feedback"
+            android:icon="@drawable/ic_menu_sign_out"
+            android:title="@string/title_feedback" />
+        <item
             android:id="@+id/nav_sign_out"
             android:icon="@drawable/ic_menu_sign_out"
             android:title="@string/title_sign_out" />

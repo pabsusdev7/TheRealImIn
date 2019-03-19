@@ -3,6 +3,7 @@ package com.ingenuityapps.android.therealimin;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
@@ -314,6 +315,13 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                 return true;
             case R.id.action_settings:
                 intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case R.id.nav_feedback:
+                intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(
+                        getString(R.string.app_url)));
+                intent.setPackage("com.android.vending");
                 startActivity(intent);
                 return true;
         }

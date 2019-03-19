@@ -75,6 +75,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
                         DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkInID);
                         final Timestamp checkOutTime = Timestamp.now();
 
+                        final Intent attendanceActivityIntent = new Intent(this, AttendanceActivity.class);
+
                         checkInRef
                                 .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME,checkOutTime)
                                 .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -91,6 +93,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
                                             SharedPreferences.Editor editor = sharedPreferences.edit();
                                             editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
                                             editor.apply();
+
+                                            startActivity(attendanceActivityIntent);
 
                                             NotificationUtils.remindUserAutoCheckOut(getApplicationContext(), sharedPreferences.getString(Constants.SHARED_PREF_EVENTDESCRIPTION,null), checkOutTime);
 

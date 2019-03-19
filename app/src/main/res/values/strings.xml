@@ -88,4 +88,8 @@
     <string name="autocheckout_reminder_notification_title">Event Check-Out</string>
     <string name="autocheckout_reminder_notification_body">Based on your current location, you have been checked-out of the %s event at %s.</string>
     <string name="label_greeting">Hi, %s!</string>
+    <string name="title_feedback">Feedback</string>
+    <string name="app_url">https://play.google.com/store/apps/details?id=com.ingenuityapps.android.therealimin</string>
+    <string name="desc_close">Close</string>
+    <string name="label_event_checkin">Ready to check-in?</string>
 </resources>

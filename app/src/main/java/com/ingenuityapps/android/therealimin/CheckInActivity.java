@@ -14,6 +14,7 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -111,6 +112,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     private List<Geofence> mGeofenceList;
     private String mDeviceID;
     private String mOrganizationID;
+    private Event mSelectedEvent;
 
     private LocationManager mLocationManager;
     private Location mCurrentLocation;
@@ -139,6 +141,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
     ImageView mOrganizationLogo;
     @BindView(R.id.event_spinner)
     Spinner mEventsSpinner;
+    @BindView(R.id.iv_close)
+    ImageView mCloseEventInfoContainer;
     @BindView(R.id.event)
     TextView mEventDescription;
     @BindView(R.id.tv_event_label)
@@ -210,18 +214,34 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                     StringWithTag selectedItem = (StringWithTag) adapterView.getItemAtPosition(pos);
 
 
-                    Event event = mEvents.get((String)selectedItem.tag);
+                    mSelectedEvent = mEvents.get((String)selectedItem.tag);
 
-                    setUpEventInfoContainer(event, false);
+                    setUpEventInfoContainer(mSelectedEvent, true);
 
+                    mEventLabel.setText(R.string.label_event_checkin);
                     mEventInfoContainer.setVisibility(View.VISIBLE);
-                } else
+                    mEventsSpinner.setVisibility(View.GONE);
+                } else {
+                    mSelectedEvent = null;
+                    mEventLabel.setText(R.string.label_event);
                     mEventInfoContainer.setVisibility(View.GONE);
+                    mEventsSpinner.setVisibility(View.VISIBLE);
+                }
 
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        mCloseEventInfoContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                mEventsSpinner.setVisibility(View.VISIBLE);
+                mEventsSpinner.setSelection(0);
 
             }
         });
@@ -320,6 +340,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
                 mEventsSpinner.setVisibility(View.GONE);
                 mCheckIn.setVisibility(View.GONE);
+                mCloseEventInfoContainer.setVisibility(View.GONE);
                 mEventLabel.setVisibility(View.GONE);
                 mGreeting.setVisibility(View.GONE);
 
@@ -500,6 +521,13 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                 intent = new Intent(this, SettingsActivity.class);
                 startActivity(intent);
                 return true;
+            case R.id.nav_feedback:
+                intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(
+                        getString(R.string.app_url)));
+                intent.setPackage("com.android.vending");
+                startActivity(intent);
+                return true;
 
         }
 
@@ -566,7 +594,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                         com.ingenuityapps.android.therealimin.data.Location location = documentSnapshot.toObject(com.ingenuityapps.android.therealimin.data.Location.class);
                                         event.setLocation(location);
 
-                                        events.add(new StringWithTag(event.getDescription(), event.getEventID()));
+                                        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd MMM (HH:mm)");
+                                        events.add(new StringWithTag(String.format("%s - %s",dateFormatter.format(event.getStarttime().toDate()),event.getDescription()), event.getEventID()));
                                         mEvents.put(event.getEventID(), event);
 
 
@@ -792,7 +821,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         }
 
         //After authentication, start check-in verification (time and location)
-        final Event e = mEvents.get(((StringWithTag) mEventsSpinner.getSelectedItem()).tag);
+        final Event e = mSelectedEvent;
 
         if (mDeviceID != null) {
             try {
@@ -999,9 +1028,8 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         @Override
         public void onClick(View view) {
 
-            final Event e = mEvents.get(((StringWithTag) mEventsSpinner.getSelectedItem()).tag);
             //Check if selected event is valid before proceeding
-            if (e != null) {
+            if (mSelectedEvent != null) {
 
 
                 // Set up the crypto object for later. The object will be authenticated by use
