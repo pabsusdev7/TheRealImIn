@@ -2,14 +2,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/widget_background"
+    android:background="@drawable/appwidget_bg"
+    android:backgroundTint="@color/widget_background"
+    android:backgroundTintMode="src_over"
     android:padding="@dimen/widget_margin">
 
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="3"
+        android:layout_weight="2"
+        android:backgroundTint="@color/checked_in"
+        android:backgroundTintMode="multiply"
         android:orientation="horizontal">
 
         <ImageView
@@ -36,8 +40,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:contentDescription="@string/desc_refresh"
             android:background="@color/fui_transparent"
+            android:contentDescription="@string/desc_refresh"
             android:src="@drawable/ic_refresh_white" />
 
 

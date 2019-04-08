@@ -20,21 +20,29 @@
             android:id="@+id/event"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
             android:textSize="20sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="@+id/date"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="32dp"
             android:textSize="18sp"
             app:layout_constraintBottom_toTopOf="@+id/location_map"
-            app:layout_constraintEnd_toEndOf="@id/event"
-            app:layout_constraintStart_toStartOf="@id/event" />
+            app:layout_constraintEnd_toEndOf="@id/horizontal_middle"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="@id/horizontal_middle"
+            app:layout_constraintTop_toBottomOf="@id/event"
+            app:layout_constraintVertical_bias="1.0" />
 
         <TextView
             android:id="@+id/location_map"
@@ -110,14 +118,12 @@
             android:id="@+id/tv_required"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:textColor="@color/red"
+            android:layout_marginTop="16dp"
             android:text="@string/required_label"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/date"
-            app:layout_constraintStart_toStartOf="@+id/date"
-            app:layout_constraintTop_toBottomOf="@+id/end_time" />
+            android:textColor="@color/red"
+            app:layout_constraintEnd_toEndOf="@+id/location_description"
+            app:layout_constraintStart_toStartOf="@+id/location_description"
+            app:layout_constraintTop_toBottomOf="@+id/location_description" />
 
         <ImageView
             android:id="@+id/iv_close"

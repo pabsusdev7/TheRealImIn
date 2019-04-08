@@ -66,8 +66,7 @@ public class NotificationUtils {
                 .setAutoCancel(true);
 
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
-                && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             notificationBuilder.setPriority(NotificationCompat.PRIORITY_HIGH);
         }
 
@@ -91,8 +90,7 @@ public class NotificationUtils {
     private static Bitmap largeIcon(Context context) {
 
         Resources res = context.getResources();
-        Bitmap largeIcon = BitmapFactory.decodeResource(res, R.mipmap.ic_launcher_foreground);
-        return largeIcon;
+        return BitmapFactory.decodeResource(res, R.mipmap.ic_launcher_foreground);
     }
 
 }

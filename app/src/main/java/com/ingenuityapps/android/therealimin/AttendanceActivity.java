@@ -50,10 +50,10 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
     private static final String TAG = AttendanceActivity.class.getSimpleName();
 
     private FirebaseFirestore db;
+    private FirebaseUser mUser;
 
     @BindView(R.id.rv_attendance)
     RecyclerView mRecyclerView;
-    private DividerItemDecoration mDividerItemDecoration;
     private AttendanceAdapter mAttendanceAdapter;
     @BindView(R.id.tv_error_message_display)
     TextView mErrorMessageDisplay;
@@ -62,7 +62,6 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
     @BindView(R.id.tv_empty_message_display)
     TextView mEmptyMessageDisplay;
 
-    private String mDeviceID;
     private List<CheckIn> mUserCheckIns;
 
     @Override
@@ -70,12 +69,17 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_attendance);
         ButterKnife.bind(this);
+        mUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if(mUser==null){
+            Intent intent = new Intent(this, OrganizationActivity.class);
+            startActivity(intent);
+            return;
+        }
 
         db = FirebaseFirestore.getInstance();
 
         SharedPreferences prefs = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
-
-        mDeviceID = prefs.getString(Constants.SHARED_PREF_DEVICEID,null);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(true);
@@ -88,7 +92,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
         mRecyclerView.setHasFixedSize(true);
 
-        mDividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(),
+        DividerItemDecoration mDividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(),
                 layoutManager.getOrientation());
 
         mRecyclerView.addItemDecoration(mDividerItemDecoration);
@@ -165,10 +169,10 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                                                                             .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                                                                                 @Override
                                                                                 public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                                                                    if(task.isSuccessful())
-                                                                                    {
-                                                                                        event.setRequired(task.getResult().exists());
-                                                                                    }
+                                                                                if(task.isSuccessful())
+                                                                                {
+                                                                                    event.setRequired(task.getResult().exists());
+                                                                                }
                                                                                 }
                                                                             });
                                                                 }
@@ -209,9 +213,6 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
 
                                                     }
 
-                                                    if(checkInCount == 0)
-                                                        showNoResultsMessage();
-
                                                 } else {
                                                     showErrorMessage();
                                                     Log.w(TAG, "Error getting documents.", task.getException());
@@ -231,9 +232,7 @@ public class AttendanceActivity extends AppCompatActivity implements AttendanceA
                         Log.e(TAG, e.getMessage());
                         showErrorMessage();
                     }
-                });;
-
-
+                });
 
 
     }

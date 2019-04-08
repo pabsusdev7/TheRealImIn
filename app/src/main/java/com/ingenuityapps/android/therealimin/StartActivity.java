@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
 import com.squareup.picasso.Picasso;
 
@@ -22,10 +24,19 @@ public class StartActivity extends AppCompatActivity {
     TextView appTitle;
     @BindView(R.id.tv_app_slogan)
     TextView appSlogan;
+    private FirebaseUser mUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if(mUser!=null){
+            Intent intent = new Intent(this, CheckInActivity.class);
+            startActivity(intent);
+            return;
+        }
 
         View decorView = getWindow().getDecorView();
         // Hide the status bar.

@@ -52,7 +52,6 @@ public class OrganizationActivity extends AppCompatActivity {
     private ArrayAdapter<StringWithTag> mOrganizationsAdapter;
     private Map<String, Organization> mOrganizations;
     private SharedPreferences mSharedPreferences;
-    private String mDeviceID;
 
     @BindView(R.id.org_spinner)
     Spinner mOrgSpinner;
@@ -170,18 +169,19 @@ public class OrganizationActivity extends AppCompatActivity {
 
         TelephonyManager telephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
 
+        String mDeviceImeiID;
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            mDeviceID = !checkDeviceInfoPermission() ? null : telephonyManager.getDeviceId();
+            mDeviceImeiID = !checkDeviceInfoPermission() ? null : telephonyManager.getDeviceId();
         }
         else {
 
-            mDeviceID = telephonyManager.getDeviceId();
+            mDeviceImeiID = telephonyManager.getDeviceId();
 
         }
 
 
         SharedPreferences.Editor editor = mSharedPreferences.edit();
-        editor.putString(Constants.SHARED_PREF_DEVICEID, mDeviceID);
+        editor.putString(Constants.SHARED_PREF_DEVICEIMEIID, mDeviceImeiID);
         editor.apply();
 
 

@@ -6,14 +6,13 @@
     <color name="colorAccent">#4cce91</color>
     <color name="background">#C2C2C2</color>
     <color name="checked_in">@color/colorAccent</color>
-    <color name="checkedin_status">#cfd1ce</color>
     <color name="primary_text">#212121</color>
     <color name="secondary_text">#727272</color>
     <color name="linkable_text">#2e9df2</color>
     <color name="detail_accent_pane_background">#455A64</color>
     <color name="detail_accent_label">#90A4AE</color>
     <color name="inapp_notification">#33B5E5</color>
-    <color name="widget_background">@color/colorPrimary</color>
+    <color name="widget_background">#80FF8982</color>
     <color name="red">#e25656</color>
     <color name="warning_color">#f4511e</color>
     <color name="hint_color">#42000000</color>

@@ -20,7 +20,6 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".CheckInActivity"
-            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize"
             android:label="@string/title_activity_checkin" />
 
@@ -36,7 +35,7 @@
             android:parentActivityName=".AttendanceActivity" />
         <activity
             android:name=".LoginActivity"
-            android:label="@string/title_activity_login"></activity>
+            android:label="@string/title_activity_login" />
         <activity
             android:name=".SettingsActivity"
             android:label="@string/action_settings"

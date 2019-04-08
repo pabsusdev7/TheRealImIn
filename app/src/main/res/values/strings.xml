@@ -53,7 +53,7 @@
     <string name="from_label">From</string>
     <string name="to_label">To</string>
     <string name="required_label">Required</string>
-    <string name="timer_done">Event Concluded!</string>
+    <string name="timer_done">Time\'s Up!</string>
     <string name="checkedin_message">You are currently checked in %s. You will be checked out
         as soon as you leave %s. You may resume other activities but don\'t close ImIn until you are checked out.
     </string>

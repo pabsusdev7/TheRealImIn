@@ -20,7 +20,6 @@ import java.text.SimpleDateFormat;
 public class AttendanceDetailActivity extends AppCompatActivity {
 
     private static final String TAG = AttendanceDetailActivity.class.getSimpleName();
-    private ActivityAttendanceDetailBinding mDetailBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +29,7 @@ public class AttendanceDetailActivity extends AppCompatActivity {
         actionBar.setDisplayShowHomeEnabled(true);
         actionBar.setIcon(R.mipmap.ic_launcher_round);
 
-        mDetailBinding = DataBindingUtil.setContentView(this, R.layout.activity_attendance_detail);
+        ActivityAttendanceDetailBinding mDetailBinding = DataBindingUtil.setContentView(this, R.layout.activity_attendance_detail);
 
         Intent intentThatStartedThisActivity = getIntent();
 
@@ -57,6 +56,7 @@ public class AttendanceDetailActivity extends AppCompatActivity {
                     mDetailBinding.primaryInfo.startTime.setText(timeFormatter.format(formatter.parse(intentData.getEvent().getStarttime().toDate().toString())));
                     mDetailBinding.primaryInfo.endTime.setText(timeFormatter.format(formatter.parse(intentData.getEvent().getEndtime().toDate().toString())));
                     mDetailBinding.primaryInfo.tvRequired.setVisibility(intentData.getEvent().getRequired()?View.VISIBLE:View.INVISIBLE);
+                    mDetailBinding.primaryInfo.ivClose.setVisibility(View.GONE);
 
                     mDetailBinding.extraDetails.checkin.setText(checkInTimeFormatter.format(formatter.parse(intentData.getCheckInTime().toDate().toString())));
                     mDetailBinding.extraDetails.checkout.setText((intentData.getCheckOutTime().toDate().getTime() > 0) ? checkInTimeFormatter.format(formatter.parse(intentData.getCheckOutTime().toDate().toString())) : getResources().getString(R.string.no_data));

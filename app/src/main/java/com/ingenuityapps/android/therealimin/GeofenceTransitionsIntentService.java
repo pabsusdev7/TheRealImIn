@@ -32,8 +32,6 @@ public class GeofenceTransitionsIntentService extends IntentService {
 
     private static final String TAG = GeofenceTransitionsIntentService.class.getSimpleName();
 
-    private FirebaseFirestore db;
-
 
     private GeofencingClient mGeofencingClient;
 
@@ -45,7 +43,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
     // ...
     protected void onHandleIntent(final Intent intent) {
 
-        db = FirebaseFirestore.getInstance();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         mGeofencingClient  = LocationServices.getGeofencingClient(this);
@@ -75,7 +73,6 @@ public class GeofenceTransitionsIntentService extends IntentService {
                         DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkInID);
                         final Timestamp checkOutTime = Timestamp.now();
 
-                        final Intent attendanceActivityIntent = new Intent(this, AttendanceActivity.class);
 
                         checkInRef
                                 .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME,checkOutTime)
@@ -94,9 +91,11 @@ public class GeofenceTransitionsIntentService extends IntentService {
                                             editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
                                             editor.apply();
 
-                                            startActivity(attendanceActivityIntent);
-
                                             NotificationUtils.remindUserAutoCheckOut(getApplicationContext(), sharedPreferences.getString(Constants.SHARED_PREF_EVENTDESCRIPTION,null), checkOutTime);
+
+                                            Intent checkInIntent = new Intent(getApplicationContext(), CheckInActivity.class);
+                                            startActivity(checkInIntent);
+
 
                                         }else{
                                             Toast toast = Toast.makeText(getApplicationContext(), "Check Out UnSuccessful! Please, try again.", Toast.LENGTH_LONG);

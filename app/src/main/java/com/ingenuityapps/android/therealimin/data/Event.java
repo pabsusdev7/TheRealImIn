@@ -54,7 +54,7 @@ public class Event implements Parcelable {
         mEndTime = new Timestamp(new Date(in.readLong()));
         //mLocation = in.readTypedObject(Location.CREATOR);
         mLocation = in.readParcelable(Location.class.getClassLoader());
-        mRequired = in.readInt()>0?true:false;
+        mRequired = in.readInt() > 0;
     }
 
     public static final Creator<Event> CREATOR = new Creator<Event>() {

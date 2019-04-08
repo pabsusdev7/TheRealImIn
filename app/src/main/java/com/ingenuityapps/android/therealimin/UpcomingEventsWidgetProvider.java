@@ -35,7 +35,7 @@ public class UpcomingEventsWidgetProvider extends AppWidgetProvider {
 
         views.setEmptyView(R.id.gv_events, R.id.empty_view);
 
-        Intent appIntent = new Intent(context, LoginActivity.class);
+        Intent appIntent = new Intent(context, CheckInActivity.class);
         PendingIntent appPendingIntent = PendingIntent.getActivity(context, 0, appIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         views.setPendingIntentTemplate(R.id.gv_events, appPendingIntent);
 

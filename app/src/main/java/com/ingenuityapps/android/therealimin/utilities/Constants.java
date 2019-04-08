@@ -13,6 +13,7 @@ public final class Constants {
     public static final long ONE_MINUTE_IN_MILLIS=60000;
     public static final String SHARED_PREFS = "shared_preferences";
     public static final String SHARED_PREF_DEVICEID = "deviceid";
+    public static final String SHARED_PREF_DEVICEIMEIID = "deviceimeiid";
     public static final String SHARED_PREF_CHECKEDIN = "checkedin";
     public static final String SHARED_PREF_CHECKINID = "checkinid";
     public static final String SHARED_PREF_EVENTID = "eventid";

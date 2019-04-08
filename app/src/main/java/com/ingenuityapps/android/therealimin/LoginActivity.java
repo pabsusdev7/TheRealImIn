@@ -44,7 +44,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 101;
     private static final String TAG = LoginActivity.class.getSimpleName();
     private FirebaseFirestore db;
-    private String mDeviceID;
+    private String mDeviceImeiID;
     private SharedPreferences mSharedPreferences;
     // Choose authentication providers
     List<AuthUI.IdpConfig> providers = Arrays.asList(
@@ -61,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
 
         mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFS, MODE_PRIVATE);
 
-        mDeviceID = mSharedPreferences.getString(Constants.SHARED_PREF_DEVICEID,null);
+        mDeviceImeiID = mSharedPreferences.getString(Constants.SHARED_PREF_DEVICEIMEIID,null);
 
         // Create and launch sign-in intent
         startActivityForResult(
@@ -112,10 +112,10 @@ public class LoginActivity extends AppCompatActivity {
                 CollectionReference deviceCollectionRef = db.collection(Constants.FIRESTORE_DEVICE);
 
 
-                if(mDeviceID!=null) {
+                if(mDeviceImeiID!=null) {
 
                     deviceCollectionRef
-                            .whereEqualTo(Constants.FIRESTORE_DEVICE_IMEI, mDeviceID)
+                            .whereEqualTo(Constants.FIRESTORE_DEVICE_IMEI, mDeviceImeiID)
                             .get()
                             .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                 @Override
@@ -143,7 +143,7 @@ public class LoginActivity extends AppCompatActivity {
                                         }else{
                                             Map<String, Object> data = new HashMap<>();
                                             data.put(Constants.FIRESTORE_DEVICE_ATTENDEEID, user.getUid());
-                                            data.put(Constants.FIRESTORE_DEVICE_IMEI, mDeviceID);
+                                            data.put(Constants.FIRESTORE_DEVICE_IMEI, mDeviceImeiID);
 
 
                                             db.collection(Constants.FIRESTORE_DEVICE)

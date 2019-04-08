@@ -69,6 +69,7 @@ import com.ingenuityapps.android.therealimin.data.CheckIn;
 import com.ingenuityapps.android.therealimin.data.Event;
 import com.ingenuityapps.android.therealimin.utilities.Constants;
 import com.ingenuityapps.android.therealimin.utilities.LocationUtils;
+import com.ingenuityapps.android.therealimin.utilities.NotificationUtils;
 import com.ingenuityapps.android.therealimin.utilities.StringWithTag;
 import com.jakewharton.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
@@ -183,9 +184,15 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
         setContentView(R.layout.activity_check_in);
         ButterKnife.bind(this);
 
-        db = FirebaseFirestore.getInstance();
         mUser = FirebaseAuth.getInstance().getCurrentUser();
 
+        if(mUser==null){
+            Intent intent = new Intent(this, OrganizationActivity.class);
+            startActivity(intent);
+            return;
+        }
+
+        db = FirebaseFirestore.getInstance();
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(true);
         actionBar.setIcon(R.mipmap.ic_launcher_round);
@@ -308,7 +315,6 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
     }
 
-
     private void loadOrganizationLogo() {
 
         String imageUrl = String.format(getResources().getString(R.string.org_logo_url),mOrganizationID!=null ? mOrganizationID : "default");
@@ -369,9 +375,11 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
                             DocumentReference checkInRef = db.collection(Constants.FIRESTORE_CHECKIN).document(checkin_id);
 
+                            final Timestamp checkOutTime = Timestamp.now();
+
                             checkInRef
-                                    .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, Timestamp.now())
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    .update(Constants.FIRESTORE_CHECKIN_CHECKOUTTIME, checkOutTime);
+                                    /*.addOnSuccessListener(new OnSuccessListener<Void>() {
                                         @Override
                                         public void onSuccess(Void aVoid) {
                                             Toast toast = Toast.makeText(getApplicationContext(), "Check Out Successful!", Toast.LENGTH_LONG);
@@ -385,13 +393,16 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                             Toast toast = Toast.makeText(getApplicationContext(), "Check Out UnSuccessful! Please, try again.", Toast.LENGTH_LONG);
                                             toast.show();
                                         }
-                                    });
+                                    });*/
 
                             editor.putBoolean(Constants.SHARED_PREF_CHECKEDIN, false);
                             editor.apply();
 
+                            /*NotificationUtils.remindUserAutoCheckOut(getApplicationContext(), mSharedPreferences.getString(Constants.SHARED_PREF_EVENTDESCRIPTION,null), checkOutTime);
+
+
                             Intent checkInIntent = new Intent(getApplicationContext(), CheckInActivity.class);
-                            startActivity(checkInIntent);
+                            startActivity(checkInIntent);*/
                         }
                     };
 
@@ -686,7 +697,10 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
 
         if(checkLocationPermission()) {
             mCurrentLocation = location != null ? location : mLocationManager.getLastKnownLocation(mLocationManager.getBestProvider(createFineCriteria(), true));
-            //if(mCurrentLocation!=null)Log.v(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
+            if(BuildConfig.DEBUG && mCurrentLocation!=null) {
+                //Log.v(TAG, "Current Location: " + mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
+                mEventLabel.setText(mCurrentLocation.getLatitude() + "," + mCurrentLocation.getLongitude());
+            }
         }
 
     }
@@ -866,7 +880,7 @@ public class CheckInActivity extends AppCompatActivity implements LocationListen
                                                             e.getLocation().getGeolocation().getLongitude(),
                                                             e.getLocation().getRadius()
                                                     )
-                                                    .setExpirationDuration(e.getEndtime().toDate().getTime()-Calendar.getInstance().getTimeInMillis())
+                                                    .setExpirationDuration(e.getEndtime().toDate().getTime() + (Constants.MAX_MINUTES_CHECKIN_BEFOREEVENT * Constants.ONE_MINUTE_IN_MILLIS) - Calendar.getInstance().getTimeInMillis())
                                                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_EXIT)
                                                     .build());
 
