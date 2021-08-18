@@ -16,3 +16,9 @@ FEATURES
 - Utilizes Geo-fencing and Biometric Authentication for checking user in/out of events
 - Provides the user an overview of attended and missed events
 - A home-screen widget will list upcoming events for the user.
+
+DOWNLOAD
+- https://play.google.com/store/apps/details?id=com.ingenuityapps.android.therealimin&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1
+
+OTHER PLATFORMS:
+- iOS: https://github.com/pabsusdev7/TheRealImIn-Swift
